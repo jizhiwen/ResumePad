@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ResumePad — 任务上下文恢复</title>
+  <script>
+    (function () {
+      var k = 'resumepad_theme';
+      var t = localStorage.getItem(k);
+      var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fafafa;
+      --surface: #fff;
+      --muted-surface: #f5f5f5;
+      --ink: #171717;
+      --muted: #737373;
+      --border: #e5e5e5;
+      --accent-hover: #404040;
+      --danger: #dc2626;
+      --toast-bg: #171717;
+      --toast-fg: #fafafa;
+      --backdrop: rgba(0, 0, 0, 0.4);
+      --radius: 4px;
+      --font: system-ui, -apple-system, "Segoe UI", "Noto Sans SC", sans-serif;
+      --mono: ui-monospace, "SF Mono", monospace;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0a0a;
+      --surface: #0a0a0a;
+      --muted-surface: #141414;
+      --ink: #fafafa;
+      --muted: #a3a3a3;
+      --border: #262626;
+      --accent-hover: #d4d4d4;
+      --danger: #f87171;
+      --toast-bg: #fafafa;
+      --toast-fg: #0a0a0a;
+      --backdrop: rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar, header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      flex-wrap: wrap;
+    }
+
+    button.brand {
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      color: inherit;
+      text-align: left;
+    }
+
+    button.brand:hover h1 { color: var(--accent-hover); }
+
+    .brand h1 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .brand p { display: none; }
+
+    .toolbar, .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      transition: color 0.15s, background 0.15s;
+    }
+
+    button:hover {
+      color: var(--ink);
+      background: var(--muted-surface);
+    }
+
+    button.primary {
+      color: var(--bg);
+      background: var(--ink);
+      padding: 6px 12px;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+      color: var(--bg);
+    }
+
+    button.danger:hover { color: var(--danger); }
+
+    button.ghost-theme, button.icon-btn {
+      font-size: 0.75rem;
+      min-width: 2.5rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      flex: 1;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 40vh;
+      }
+    }
+
+    .panel {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .sidebar {
+      padding: 16px 0;
+      max-height: calc(100vh - 73px);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar h2 {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0 20px 8px;
+      text-transform: none;
+    }
+
+    .sidebar h2.history-heading {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .task-list { list-style: none; }
+
+    .task-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+    }
+
+    .task-item:hover { background: var(--muted-surface); }
+
+    .task-item.active {
+      border-left-color: var(--ink);
+      background: var(--muted-surface);
+    }
+
+    .task-item.history-item .title { font-weight: 400; }
+
+    .task-item .title {
+      font-weight: 500;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .task-item .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .task-item .next-preview {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .empty-list {
+      padding: 12px 20px;
+      color: var(--muted);
+      font-size: 0.8125rem;
+    }
+
+    .main {
+      min-height: 360px;
+      padding: 32px 40px 48px;
+      max-width: none;
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 24px 20px 40px; }
+    }
+
+    .resume-view { max-width: 36rem; padding: 0; }
+
+    .resume-view .badge {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .resume-view .badge.done { color: var(--muted); }
+
+    .resume-view h2 {
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .resume-view .parked-at {
+      color: var(--muted);
+      font-size: 0.8125rem;
+      margin-bottom: 32px;
+    }
+
+    .context-block { margin-bottom: 28px; }
+
+    .context-block.editable-block,
+    .resume-view h2.resume-title {
+      cursor: text;
+    }
+
+    .context-block .body.empty {
+      color: var(--muted);
+    }
+
+    .context-block h3 {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: none;
+    }
+
+    .context-block .body {
+      font-size: 0.9375rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .linkified a,
+    .field-links a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      word-break: break-all;
+    }
+
+    .linkified a:hover,
+    .field-links a:hover { color: var(--accent-hover); }
+
+    .field-links {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .field-links .sep { color: var(--border); margin: 0 6px; }
+
+    .context-block .refs {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+
+    .resume-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .welcome {
+      max-width: 28rem;
+      padding-top: 32px;
+    }
+
+    .welcome h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .welcome-lead {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .welcome-hint {
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .welcome kbd {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 1px 6px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--muted-surface);
+    }
+
+    .form-view { max-width: 36rem; padding: 0; }
+
+    .form-view h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 24px; }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .field .hint { font-weight: 400; }
+
+    input[type="text"], textarea, .rich-input {
+      width: 100%;
+      font: inherit;
+      font-size: 0.9375rem;
+      padding: 0 0 8px;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    textarea { resize: vertical; min-height: 64px; line-height: 1.55; }
+    textarea.tall { min-height: 88px; }
+
+    .rich-input {
+      min-height: 64px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+    }
+
+    .rich-input.tall { min-height: 88px; }
+
+    .rich-input:focus {
+      outline: none;
+      border-bottom-color: var(--ink);
+    }
+
+    .rich-input:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .rich-input img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 8px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-bottom-color: var(--ink);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    .rich-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 8px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .rich-body.refs {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .kbd {
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      color: var(--muted);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--toast-bg);
+      color: var(--toast-fg);
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    dialog {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 380px;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    dialog::backdrop { background: var(--backdrop); }
+
+    dialog h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    dialog p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    dialog .actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button type="button" class="brand" id="btnHome" title="首页">
+        <h1>ResumePad</h1>
+      </button>
+      <nav class="toolbar">
+        <button type="button" id="btnTheme" class="ghost-theme" title="切换主题 (T)" aria-label="切换主题">Dark</button>
+        <button type="button" id="btnExport" title="导出 JSON">导出</button>
+        <button type="button" id="btnImport">导入</button>
+        <button type="button" id="btnNew" title="Switch (N)">Switch</button>
+        <input type="file" id="importFile" accept=".json" class="hidden" />
+      </nav>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>封存 · <span id="taskCount">0</span></h2>
+        <ul class="task-list" id="taskList"></ul>
+        <p class="empty-list hidden" id="emptyList">暂无 · <span class="kbd">N</span> Switch</p>
+        <h2 class="history-heading">完成 · <span id="historyCount">0</span></h2>
+        <ul class="task-list" id="historyList"></ul>
+        <p class="empty-list hidden" id="emptyHistory">暂无完成记录</p>
+      </aside>
+
+      <main class="main" id="mainPanel">
+        <section class="welcome" id="welcomeView">
+          <h2>选择任务</h2>
+          <p class="welcome-lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
+          <p class="welcome-hint">需要切换任务时，点顶部 <strong>Switch</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词。</p>
+        </section>
+        <section class="resume-view hidden" id="resumeView"></section>
+        <section class="form-view hidden" id="formView">
+          <h2 id="formTitle">封存</h2>
+          <form id="taskForm">
+            <input type="hidden" id="taskId" />
+            <div class="field">
+              <label for="title">任务名称 <span class="hint">— 一句话概括</span></label>
+              <input type="text" id="title" placeholder="例如：修复 ResumePad 导出 bug" autofocus />
+            </div>
+            <div class="field">
+              <label for="goal">要达成什么 <span class="hint">— 回来先读这个</span></label>
+              <div id="goal" class="rich-input tall" contenteditable="true" data-placeholder="这次工作的最终目标是什么？成功标准是什么？"></div>
+            </div>
+            <div class="field">
+              <label for="progress">做到哪了 <span class="hint">— 已完成的、刚试过的</span></label>
+              <div id="progress" class="rich-input tall" contenteditable="true" data-placeholder="已经改了什么、验证过什么、有什么结论"></div>
+            </div>
+            <div class="field">
+              <label for="nextAction">下一步只做一件事 <span class="hint">— 恢复后立刻动手</span></label>
+              <div id="nextAction" class="rich-input" contenteditable="true" data-placeholder="例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证"></div>
+            </div>
+            <div class="field">
+              <label for="references">关键引用 <span class="hint">— 路径、分支、URL、命令</span></label>
+              <div id="references" class="rich-input tall refs" contenteditable="true" data-placeholder="/home/zw/src/tools/ResumePad&#10;branch: main"></div>
+            </div>
+            <div class="field">
+              <label for="blockers">卡点 / 未决问题</label>
+              <div id="blockers" class="rich-input" contenteditable="true" data-placeholder="卡在哪里？需要谁/input？"></div>
+            </div>
+            <div class="field">
+              <label for="notes">其他备忘</label>
+              <div id="notes" class="rich-input" contenteditable="true" data-placeholder="心态、时间限制、别忘的事…"></div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="btnSaveForm">保存</button>
+              <button type="button" id="btnCancelForm">取消</button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <dialog id="confirmDialog">
+    <h3 id="confirmTitle">确认</h3>
+    <p id="confirmMessage"></p>
+    <div class="actions">
+      <button type="button" id="confirmCancel">取消</button>
+      <button type="button" class="danger" id="confirmOk">确定</button>
+    </div>
+  </dialog>
+
+  <dialog id="importDialog">
+    <h3>导入数据</h3>
+    <p id="importMessage"></p>
+    <div class="actions">
+      <button type="button" id="importCancel">取消</button>
+      <button type="button" id="importMerge">合并到现有</button>
+      <button type="button" class="primary" id="importReplace">覆盖现有</button>
+    </div>
+  </dialog>
+
+  <script>
+    const LEGACY_STORAGE_KEY = 'resumepad_tasks_v1';
+    const THEME_KEY = 'resumepad_theme';
+    const DB_NAME = 'resumepad_db';
+    const DB_VERSION = 1;
+    const STORE = 'kv';
+    const DATA_KEY = 'data';
+    const HISTORY_RETENTION_DAYS = 14;
+    const DATA_VERSION = 2;
+    const MAX_IMAGE_WIDTH = 1280;
+    const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
+
+    const $ = (sel) => document.querySelector(sel);
+
+    let tasks = [];
+    let history = [];
+    let selectedId = null;
+    let selectedFromHistory = false;
+    let editingId = null;
+    let pendingImport = null;
+
+    const idb = {
+      db: null,
+      open() {
+        if (this.db) return Promise.resolve(this.db);
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            this.db = req.result;
+            resolve(this.db);
+          };
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE)) {
+              db.createObjectStore(STORE);
+            }
+          };
+        });
+      },
+      async get(key) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(STORE, 'readonly');
+          const req = tx.objectStore(STORE).get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+      async set(key, value) {
+        await this.open();
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(STORE, 'readwrite');
+          const req = tx.objectStore(STORE).put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      },
+    };
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function getExportPayload() {
+      return { version: DATA_VERSION, tasks, history };
+    }
+
+    function normalizeTask(raw) {
+      if (!raw || !raw.title) return null;
+      return {
+        id: raw.id || uid(),
+        title: String(raw.title).trim(),
+        goal: raw.goal || '',
+        progress: raw.progress || '',
+        nextAction: raw.nextAction || '',
+        references: raw.references || '',
+        blockers: raw.blockers || '',
+        notes: raw.notes || '',
+        parkedAt: raw.parkedAt || raw.updatedAt || new Date().toISOString(),
+        updatedAt: raw.updatedAt || raw.parkedAt || new Date().toISOString(),
+        completedAt: raw.completedAt || null,
+      };
+    }
+
+    function compressImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+          if (w > MAX_IMAGE_WIDTH) {
+            h = Math.round(h * MAX_IMAGE_WIDTH / w);
+            w = MAX_IMAGE_WIDTH;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const usePng = file.type === 'image/png';
+          const mime = usePng ? 'image/png' : 'image/jpeg';
+          resolve(canvas.toDataURL(mime, usePng ? undefined : 0.85));
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('decode'));
+        };
+        img.src = url;
+      });
+    }
+
+    function isRichContent(s) {
+      return !!(s && (/<img[\s>]/i.test(s) || /<div|<p|<br/i.test(s)));
+    }
+
+    function htmlToPlain(html) {
+      const d = document.createElement('div');
+      d.innerHTML = html;
+      return (d.innerText || d.textContent || '').trim();
+    }
+
+    function fieldPlain(value) {
+      if (!value) return '';
+      return isRichContent(value) ? htmlToPlain(value) : value.trim();
+    }
+
+    function sanitizeRichHtml(html) {
+      const root = document.createElement('div');
+      root.innerHTML = html;
+
+      function walk(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return document.createTextNode(node.textContent);
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return null;
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'img') {
+          const src = node.getAttribute('src') || '';
+          if (!src.startsWith('data:image/')) return null;
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = '';
+          return img;
+        }
+        if (tag === 'br') return document.createElement('br');
+        if (tag === 'p' || tag === 'div' || tag === 'span') {
+          const el = document.createElement(tag === 'span' ? 'span' : 'div');
+          [...node.childNodes].forEach((ch) => {
+            const c = walk(ch);
+            if (c) el.appendChild(c);
+          });
+          return el;
+        }
+        const frag = document.createDocumentFragment();
+        [...node.childNodes].forEach((ch) => {
+          const c = walk(ch);
+          if (c) frag.appendChild(c);
+        });
+        return frag.childNodes.length ? frag : null;
+      }
+
+      const out = document.createElement('div');
+      [...root.childNodes].forEach((ch) => {
+        const c = walk(ch);
+        if (!c) return;
+        if (c instanceof DocumentFragment) out.appendChild(c);
+        else out.appendChild(c);
+      });
+      return out.innerHTML;
+    }
+
+    function getRichValue(id) {
+      const el = document.getElementById(id);
+      if (!el) return '';
+      const html = el.innerHTML.replace(/\u200b/g, '').trim();
+      if (!html || html === '<br>') return '';
+      return sanitizeRichHtml(html);
+    }
+
+    function setRichValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!value) {
+        el.innerHTML = '';
+        return;
+      }
+      if (isRichContent(value)) {
+        el.innerHTML = sanitizeRichHtml(value);
+      } else {
+        el.textContent = value;
+      }
+    }
+
+    function insertImageAtCursor(field, dataUrl) {
+      field.focus();
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = '';
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !field.contains(sel.anchorNode)) {
+        field.appendChild(document.createElement('br'));
+        field.appendChild(img);
+        field.appendChild(document.createElement('br'));
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const br = document.createElement('br');
+      range.insertNode(br);
+      range.insertNode(img);
+      range.setStartAfter(br);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    async function insertImageInField(field, file) {
+      if (!file?.type.startsWith('image/')) return false;
+      try {
+        const dataUrl = await compressImageFile(file);
+        insertImageAtCursor(field, dataUrl);
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        toast('已插入图片');
+        return true;
+      } catch {
+        toast('图片读取失败');
+        return false;
+      }
+    }
+
+    function initRichFields() {
+      RICH_FIELDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('paste', async (e) => {
+          const items = e.clipboardData?.items;
+          if (!items) return;
+          for (const item of items) {
+            if (!item.type.startsWith('image/')) continue;
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) await insertImageInField(el, file);
+            return;
+          }
+        });
+        el.addEventListener('dragover', (e) => e.preventDefault());
+        el.addEventListener('drop', async (e) => {
+          const files = [...(e.dataTransfer?.files || [])].filter((f) => f.type.startsWith('image/'));
+          if (!files.length) return;
+          e.preventDefault();
+          for (const file of files) {
+            await insertImageInField(el, file);
+          }
+        });
+      });
+    }
+
+    function pruneHistory() {
+      const cutoff = Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+      history = history.filter((t) => {
+        const when = new Date(t.completedAt || t.updatedAt || t.parkedAt).getTime();
+        return when >= cutoff;
+      });
+    }
+
+    async function migrateFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (!raw) return;
+        const legacy = JSON.parse(raw);
+        if (!Array.isArray(legacy) || legacy.length === 0) {
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          return;
+        }
+        const existing = await idb.get(DATA_KEY);
+        if (!existing || !existing.tasks?.length) {
+          tasks = legacy.map(normalizeTask).filter(Boolean);
+          await persistData();
+        }
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        toast('已从 localStorage 迁移到 IndexedDB');
+      } catch {
+        /* ignore */
+      }
+    }
+
+    async function load() {
+      try {
+        const data = await idb.get(DATA_KEY);
+        if (data && typeof data === 'object') {
+          tasks = (data.tasks || []).map(normalizeTask).filter(Boolean);
+          history = (data.history || []).map(normalizeTask).filter(Boolean);
+        } else {
+          tasks = [];
+          history = [];
+        }
+      } catch (e) {
+        console.error(e);
+        tasks = [];
+        history = [];
+        toast('读取数据失败，已重置为空');
+      }
+    }
+
+    async function persistData() {
+      pruneHistory();
+      const payload = getExportPayload();
+      try {
+        await idb.set(DATA_KEY, payload);
+        await idb.set('mirrorBackup', payload);
+      } catch (e) {
+        const msg = e && e.name === 'QuotaExceededError'
+          ? '存储空间不足，请导出备份；已完成记录仅保留最近两周'
+          : '保存失败：' + (e.message || e);
+        toast(msg);
+        throw e;
+      }
+    }
+
+    async function save() {
+      await persistData();
+    }
+
+    function isDarkTheme() {
+      return document.documentElement.dataset.theme === 'dark';
+    }
+
+    function updateThemeButton() {
+      const btn = $('#btnTheme');
+      if (!btn) return;
+      btn.textContent = isDarkTheme() ? 'Light' : 'Dark';
+      btn.title = isDarkTheme() ? '浅色 (T)' : '深色 (T)';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      try {
+        localStorage.setItem(THEME_KEY, theme);
+      } catch { /* theme only */ }
+      updateThemeButton();
+    }
+
+    function toggleTheme() {
+      setTheme(isDarkTheme() ? 'light' : 'dark');
+    }
+
+    function initTheme() {
+      updateThemeButton();
+      $('#btnTheme').addEventListener('click', toggleTheme);
+    }
+
+    function formatRelative(iso) {
+      const d = new Date(iso);
+      const diff = Date.now() - d.getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return '刚刚';
+      if (mins < 60) return `${mins} 分钟前`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs} 小时前`;
+      const days = Math.floor(hrs / 24);
+      if (days < 7) return `${days} 天前`;
+      return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatFull(iso) {
+      return new Date(iso).toLocaleString('zh-CN', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function toast(msg) {
+      const el = $('#toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function confirmDialog(title, message) {
+      return new Promise((resolve) => {
+        $('#confirmTitle').textContent = title;
+        $('#confirmMessage').textContent = message;
+        const dlg = $('#confirmDialog');
+        const onOk = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        const cleanup = () => {
+          dlg.close();
+          $('#confirmOk').removeEventListener('click', onOk);
+          $('#confirmCancel').removeEventListener('click', onCancel);
+        };
+        $('#confirmOk').addEventListener('click', onOk);
+        $('#confirmCancel').addEventListener('click', onCancel);
+        dlg.showModal();
+      });
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function safeHref(url) {
+      const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      try {
+        return new URL(href).href;
+      } catch {
+        return null;
+      }
+    }
+
+    function extractUrls(text) {
+      if (!text) return [];
+      const re = /(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
+      const found = text.match(re) || [];
+      return [...new Set(found)];
+    }
+
+    function linkifyHtml(escapedHtml) {
+      return escapedHtml.replace(
+        /(?:https?:\/\/|www\.)[^\s<>&"')\]]+/gi,
+        (match) => {
+          const href = safeHref(match);
+          if (!href) return match;
+          return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${match}</a>`;
+        },
+      );
+    }
+
+    function block(label, body, opts = {}) {
+      const hasBody = body && String(body).trim();
+      if (!hasBody && !opts.field) return '';
+      const cls = 'context-block';
+      const sectionCls = opts.field ? `${cls} editable-block` : cls;
+      const fieldAttr = opts.field ? ` data-field="${opts.field}"` : '';
+      let inner;
+      if (!hasBody) {
+        inner = '<div class="body empty">—</div>';
+      } else if (isRichContent(body)) {
+        const html = sanitizeRichHtml(body);
+        inner = opts.mono
+          ? `<pre class="refs rich-body linkified">${html}</pre>`
+          : `<div class="body rich-body linkified">${html}</div>`;
+      } else {
+        const linked = linkifyHtml(escapeHtml(body));
+        inner = opts.mono
+          ? `<pre class="refs linkified">${linked}</pre>`
+          : `<div class="body linkified">${linked}</div>`;
+      }
+      return `<section class="${sectionCls}"${fieldAttr}><h3>${label}</h3>${inner}</section>`;
+    }
+
+    function fieldText(el) {
+      if (el.classList?.contains('rich-input')) return el.innerText || '';
+      return el.value || '';
+    }
+
+    function updateFieldLinks(el, preview) {
+      const urls = extractUrls(fieldText(el));
+      if (!urls.length) {
+        preview.classList.add('hidden');
+        preview.innerHTML = '';
+        return;
+      }
+      preview.classList.remove('hidden');
+      preview.innerHTML = urls.map((u, i) => {
+        const href = safeHref(u);
+        const link = href
+          ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(u)}</a>`
+          : escapeHtml(u);
+        return (i ? '<span class="sep">·</span>' : '') + link;
+      }).join('');
+    }
+
+    function refreshFormLinkPreviews() {
+      $('#taskForm').querySelectorAll('.rich-input, input[type="text"]').forEach((el) => {
+        const preview = el.parentElement.querySelector('.field-links');
+        if (preview) updateFieldLinks(el, preview);
+      });
+    }
+
+    function initFormLinkPreviews() {
+      $('#taskForm').querySelectorAll('.rich-input, input[type="text"]').forEach((el) => {
+        if (el.parentElement.querySelector('.field-links')) return;
+        const preview = document.createElement('div');
+        preview.className = 'field-links hidden';
+        el.parentElement.appendChild(preview);
+        el.addEventListener('input', () => updateFieldLinks(el, preview));
+      });
+    }
+
+    function countInlineImages(t) {
+      let n = 0;
+      RICH_FIELDS.forEach((f) => {
+        const v = t[f];
+        if (v) n += (v.match(/<img[\s>]/gi) || []).length;
+      });
+      return n;
+    }
+
+    function buildSummary(t) {
+      return [
+        `# ${t.title}`,
+        '',
+        t.goal && `## 目标\n${fieldPlain(t.goal)}`,
+        t.progress && `## 进度\n${fieldPlain(t.progress)}`,
+        t.nextAction && `## 下一步\n${fieldPlain(t.nextAction)}`,
+        t.references && `## 引用\n${fieldPlain(t.references)}`,
+        t.blockers && `## 卡点\n${fieldPlain(t.blockers)}`,
+        t.notes && `## 备忘\n${fieldPlain(t.notes)}`,
+        '',
+        `封存: ${formatFull(t.parkedAt)}`,
+        t.completedAt && `完成: ${formatFull(t.completedAt)}`,
+      ].filter(Boolean).join('\n');
+    }
+
+    function buildAgentPrompt(t) {
+      const sections = [
+        '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
+        '',
+        `【任务】${t.title}`,
+      ];
+      if (t.goal) sections.push('', '【目标】', fieldPlain(t.goal));
+      if (t.progress) sections.push('', '【当前进度】', fieldPlain(t.progress));
+      if (t.nextAction) sections.push('', '【下一步 · 请从这里开始】', fieldPlain(t.nextAction));
+      if (t.references) sections.push('', '【关键引用】', fieldPlain(t.references));
+      if (t.blockers) sections.push('', '【卡点 / 未决】', fieldPlain(t.blockers));
+      if (t.notes) sections.push('', '【备忘】', fieldPlain(t.notes));
+      const imgCount = countInlineImages(t);
+      if (imgCount) {
+        sections.push('', `【图片】字段内嵌 ${imgCount} 张（见 ResumePad 界面）`);
+      }
+      sections.push(
+        '',
+        `【时间】封存于 ${formatFull(t.parkedAt)}`,
+        t.completedAt ? `已完成于 ${formatFull(t.completedAt)}` : '',
+        '',
+        '请先简要确认你理解的目标与下一步，再开始具体改动或建议。',
+      );
+      return sections.filter((line) => line !== '').join('\n');
+    }
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast(okMsg);
+      } catch {
+        toast('复制失败，请手动选择');
+      }
+    }
+
+    function renderList() {
+      const sorted = [...tasks].sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
+      $('#taskCount').textContent = sorted.length;
+      $('#emptyList').classList.toggle('hidden', sorted.length > 0);
+
+      $('#taskList').innerHTML = sorted.map((t) => {
+        const active = !selectedFromHistory && t.id === selectedId ? ' active' : '';
+        const next = t.nextAction ? `<div class="next-preview">${escapeHtml(t.nextAction)}</div>` : '';
+        return `<li class="task-item${active}" data-id="${t.id}" data-kind="active">
+          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="meta">封存于 ${formatRelative(t.parkedAt)}</div>
+          ${next}
+        </li>`;
+      }).join('');
+
+      const histSorted = [...history].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+      $('#historyCount').textContent = histSorted.length;
+      $('#emptyHistory').classList.toggle('hidden', histSorted.length > 0);
+
+      $('#historyList').innerHTML = histSorted.map((t) => {
+        const active = selectedFromHistory && t.id === selectedId ? ' active' : '';
+        return `<li class="task-item history-item${active}" data-id="${t.id}" data-kind="history">
+          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="meta">完成于 ${formatRelative(t.completedAt)}</div>
+        </li>`;
+      }).join('');
+
+      document.querySelectorAll('.task-item').forEach((el) => {
+        el.addEventListener('click', () => {
+          navigateToTask(el.dataset.id, el.dataset.kind === 'history');
+        });
+      });
+    }
+
+    function isFormVisible() {
+      return !$('#formView').classList.contains('hidden');
+    }
+
+    function getFormPayload() {
+      return {
+        title: $('#title').value.trim(),
+        goal: getRichValue('goal'),
+        progress: getRichValue('progress'),
+        nextAction: getRichValue('nextAction'),
+        references: getRichValue('references'),
+        blockers: getRichValue('blockers'),
+        notes: getRichValue('notes'),
+      };
+    }
+
+    async function saveCurrentForm({ silent = false } = {}) {
+      if (!isFormVisible()) return { ok: true, skipped: true };
+      const payload = getFormPayload();
+      const existingId = $('#taskId').value;
+      if (!payload.title) {
+        if (!existingId) return { ok: true, skipped: true };
+        if (!silent) toast('请填写任务名称');
+        return { ok: false };
+      }
+      const now = new Date().toISOString();
+      if (existingId) {
+        const idx = tasks.findIndex((x) => x.id === existingId);
+        if (idx >= 0) {
+          tasks[idx] = { ...tasks[idx], ...payload, updatedAt: now };
+        }
+        selectedId = existingId;
+        selectedFromHistory = false;
+      } else {
+        const id = uid();
+        tasks.push({
+          id,
+          ...payload,
+          parkedAt: now,
+          updatedAt: now,
+        });
+        $('#taskId').value = id;
+        selectedId = id;
+        selectedFromHistory = false;
+        editingId = id;
+      }
+      try {
+        await save();
+        renderList();
+        if (!silent) toast(existingId ? '已保存' : '已封存');
+        return { ok: true, id: selectedId };
+      } catch {
+        return { ok: false };
+      }
+    }
+
+    async function navigateToTask(id, fromHistory) {
+      if (id === selectedId && fromHistory === selectedFromHistory) {
+        if (isFormVisible() && !fromHistory && $('#taskId').value === id) {
+          const result = await saveCurrentForm({ silent: true });
+          if (!result.ok) return;
+          selectActiveResume(id);
+        }
+        return;
+      }
+
+      if (isFormVisible()) {
+        const formTaskId = $('#taskId').value;
+        const switching = fromHistory || id !== formTaskId;
+        if (switching) {
+          const result = await saveCurrentForm({ silent: true });
+          if (!result.ok) return;
+        }
+      }
+
+      if (fromHistory) selectHistoryTask(id);
+      else selectActiveResume(id);
+    }
+
+    function showView(name) {
+      $('#welcomeView').classList.toggle('hidden', name !== 'welcome');
+      $('#resumeView').classList.toggle('hidden', name !== 'resume');
+      $('#formView').classList.toggle('hidden', name !== 'form');
+    }
+
+    function findTask(id, fromHistory) {
+      return fromHistory
+        ? history.find((x) => x.id === id)
+        : tasks.find((x) => x.id === id);
+    }
+
+    function renderResumeView(t, fromHistory) {
+      const doneBadge = fromHistory
+        ? '<span class="badge done">已完成</span>'
+        : '<span class="badge">封存中</span>';
+      const timeLine = fromHistory
+        ? `<p class="parked-at">封存于 ${formatFull(t.parkedAt)} · 完成于 ${formatFull(t.completedAt)}（${formatRelative(t.completedAt)}）</p>`
+        : `<p class="parked-at">封存于 ${formatFull(t.parkedAt)}（${formatRelative(t.parkedAt)}）</p>`;
+
+      const actions = fromHistory
+        ? `
+        <button type="button" id="btnCopyAgent">Agent</button>
+        <button type="button" id="btnCopyResume">摘要</button>
+        <button type="button" id="btnRestoreResume">恢复</button>
+        <button type="button" class="danger" id="btnDeleteHistory">删除</button>
+      `
+        : `
+        <button type="button" id="btnCopyAgent">Agent</button>
+        <button type="button" id="btnCopyResume">摘要</button>
+        <button type="button" id="btnDoneResume">完成</button>
+      `;
+
+      $('#resumeView').innerHTML = `
+        ${doneBadge}
+        <h2 class="resume-title${fromHistory ? '' : ' editable-block'}"${fromHistory ? '' : ' data-field="title"'}>${escapeHtml(t.title)}</h2>
+        ${timeLine}
+        ${block('要达成什么', t.goal, { field: fromHistory ? null : 'goal' })}
+        ${block('做到哪了', t.progress, { field: fromHistory ? null : 'progress' })}
+        ${block('下一步 · 立刻做', t.nextAction, { field: fromHistory ? null : 'nextAction' })}
+        ${block('关键引用', t.references, { mono: true, field: fromHistory ? null : 'references' })}
+        ${block('卡点 / 未决', t.blockers, { field: fromHistory ? null : 'blockers' })}
+        ${block('备忘', t.notes, { field: fromHistory ? null : 'notes' })}
+        <div class="resume-actions">${actions}</div>
+      `;
+
+      $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
+      $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
+      if (fromHistory) {
+        $('#btnRestoreResume').onclick = () => restoreFromHistory(t.id);
+        $('#btnDeleteHistory').onclick = () => deleteFromHistory(t.id);
+      } else {
+        $('#btnDoneResume').onclick = () => markDone(t.id);
+      }
+    }
+
+    function selectHistoryTask(id) {
+      selectedId = id;
+      selectedFromHistory = true;
+      editingId = null;
+      const t = findTask(id, true);
+      if (!t) {
+        selectedId = null;
+        selectedFromHistory = false;
+        showView('welcome');
+        renderList();
+        return;
+      }
+      renderList();
+      showView('resume');
+      renderResumeView(t, true);
+    }
+
+    function selectActiveResume(id) {
+      selectedId = id;
+      selectedFromHistory = false;
+      editingId = null;
+      const t = findTask(id, false);
+      if (!t) {
+        selectedId = null;
+        showView('welcome');
+        renderList();
+        return;
+      }
+      renderList();
+      showView('resume');
+      renderResumeView(t, false);
+    }
+
+    function selectActiveTask(id, focusFieldId = null) {
+      selectedId = id;
+      selectedFromHistory = false;
+      editingId = id;
+      const t = findTask(id, false);
+      if (!t) {
+        selectedId = null;
+        showView('welcome');
+        renderList();
+        return;
+      }
+      renderList();
+      openForm(id, focusFieldId);
+    }
+
+    function showActiveResume() {
+      if (!selectedId || selectedFromHistory) return;
+      selectActiveResume(selectedId);
+    }
+
+    function focusFormField(fieldId) {
+      const el = fieldId ? document.getElementById(fieldId) : null;
+      if (!el) return;
+      el.focus();
+      if (!el.classList?.contains('rich-input')) return;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+
+    function openForm(id = null, focusFieldId = null) {
+      editingId = id;
+      if (id) {
+        selectedId = id;
+        selectedFromHistory = false;
+      } else {
+        selectedId = null;
+        selectedFromHistory = false;
+      }
+      const t = id ? tasks.find((x) => x.id === id) : null;
+      $('#formTitle').textContent = t ? t.title || 'Switch' : 'Switch';
+      $('#taskId').value = t ? t.id : '';
+      $('#title').value = t ? t.title : '';
+      setRichValue('goal', t ? t.goal || '' : '');
+      setRichValue('progress', t ? t.progress || '' : '');
+      setRichValue('nextAction', t ? t.nextAction || '' : '');
+      setRichValue('references', t ? t.references || '' : '');
+      setRichValue('blockers', t ? t.blockers || '' : '');
+      setRichValue('notes', t ? t.notes || '' : '');
+      showView('form');
+      refreshFormLinkPreviews();
+      renderList();
+      focusFormField(focusFieldId || 'title');
+    }
+
+    function initResumeDblClick() {
+      $('#resumeView').addEventListener('dblclick', (e) => {
+        if (selectedFromHistory || !selectedId) return;
+        if (e.target.closest('.resume-actions, button, a')) return;
+        const block = e.target.closest('[data-field]');
+        if (!block) return;
+        e.preventDefault();
+        selectActiveTask(selectedId, block.dataset.field);
+      });
+    }
+
+    async function markDone(id) {
+      if (isFormVisible() && $('#taskId').value === id) {
+        const result = await saveCurrentForm({ silent: true });
+        if (!result.ok) return;
+      }
+      const ok = await confirmDialog('标记完成', '移入「已完成」历史？可随时查看或恢复为封存。');
+      if (!ok) return;
+      const idx = tasks.findIndex((x) => x.id === id);
+      if (idx < 0) return;
+      const t = tasks[idx];
+      const now = new Date().toISOString();
+      history.unshift({ ...t, completedAt: now, updatedAt: now });
+      tasks.splice(idx, 1);
+      await save();
+      selectedFromHistory = true;
+      selectedId = t.id;
+      renderList();
+      selectHistoryTask(t.id);
+      toast('已移入完成历史');
+    }
+
+    async function restoreFromHistory(id) {
+      const idx = history.findIndex((x) => x.id === id);
+      if (idx < 0) return;
+      const t = history[idx];
+      const now = new Date().toISOString();
+      const { completedAt, ...rest } = t;
+      tasks.push({ ...rest, parkedAt: now, updatedAt: now });
+      history.splice(idx, 1);
+      await save();
+      selectedFromHistory = false;
+      selectedId = t.id;
+      renderList();
+      selectActiveResume(t.id);
+      toast('已恢复为封存任务');
+    }
+
+    async function deleteFromHistory(id) {
+      const ok = await confirmDialog('永久删除', '从完成历史中彻底删除？');
+      if (!ok) return;
+      history = history.filter((x) => x.id !== id);
+      await save();
+      if (selectedId === id) {
+        selectedId = null;
+        showView('welcome');
+      }
+      renderList();
+      toast('已从历史删除');
+    }
+
+    function mergeImported(data) {
+      const ids = new Set([...tasks, ...history].map((t) => t.id));
+      (data.tasks || []).forEach((raw) => {
+        const t = normalizeTask(raw);
+        if (t && !ids.has(t.id)) {
+          tasks.push(t);
+          ids.add(t.id);
+        }
+      });
+      (data.history || []).forEach((raw) => {
+        const t = normalizeTask(raw);
+        if (t && !ids.has(t.id)) {
+          if (!t.completedAt) t.completedAt = t.updatedAt || new Date().toISOString();
+          history.push(t);
+          ids.add(t.id);
+        }
+      });
+    }
+
+    function replaceImported(data) {
+      tasks = (data.tasks || []).map(normalizeTask).filter(Boolean);
+      history = (data.history || []).map(normalizeTask).filter(Boolean);
+    }
+
+    function parseImportFile(parsed) {
+      if (Array.isArray(parsed)) {
+        return { version: 1, tasks: parsed, history: [] };
+      }
+      if (parsed && typeof parsed === 'object') {
+        return {
+          version: parsed.version || 2,
+          tasks: parsed.tasks || [],
+          history: parsed.history || [],
+        };
+      }
+      throw new Error('invalid');
+    }
+
+    function showImportDialog(data) {
+      return new Promise((resolve) => {
+        pendingImport = data;
+        const total = (data.tasks?.length || 0) + (data.history?.length || 0);
+        $('#importMessage').textContent =
+          `将导入 ${data.tasks?.length || 0} 条封存、${data.history?.length || 0} 条历史（共 ${total} 条）。请选择：`;
+        const dlg = $('#importDialog');
+        const cleanup = (result) => {
+          dlg.close();
+          $('#importMerge').removeEventListener('click', onMerge);
+          $('#importReplace').removeEventListener('click', onReplace);
+          $('#importCancel').removeEventListener('click', onCancel);
+          pendingImport = null;
+          resolve(result);
+        };
+        const onMerge = () => cleanup('merge');
+        const onReplace = () => cleanup('replace');
+        const onCancel = () => cleanup(null);
+        $('#importMerge').addEventListener('click', onMerge);
+        $('#importReplace').addEventListener('click', onReplace);
+        $('#importCancel').addEventListener('click', onCancel);
+        dlg.showModal();
+      });
+    }
+
+    async function goWelcome() {
+      if (isFormVisible()) {
+        const existingId = $('#taskId').value;
+        if (existingId) {
+          const result = await saveCurrentForm({ silent: true });
+          if (!result.ok) return;
+        }
+      }
+      editingId = null;
+      selectedId = null;
+      selectedFromHistory = false;
+      showView('welcome');
+      renderList();
+    }
+
+    function cancelFormEdit() {
+      const existingId = $('#taskId').value;
+      if (existingId) {
+        selectActiveResume(existingId);
+        return;
+      }
+      goWelcome();
+    }
+
+    async function submitFormEdit() {
+      const result = await saveCurrentForm({ silent: false });
+      if (!result.ok) return;
+      if (result.id) selectActiveResume(result.id);
+      else showView('welcome');
+    }
+
+    $('#taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      submitFormEdit();
+    });
+    $('#btnCancelForm').onclick = () => cancelFormEdit();
+
+    async function startNewTask() {
+      if (isFormVisible()) {
+        const result = await saveCurrentForm({ silent: true });
+        if (!result.ok) return;
+      }
+      openForm();
+    }
+
+    $('#btnHome').onclick = () => goWelcome();
+    $('#btnNew').onclick = () => startNewTask();
+
+    $('#btnExport').onclick = () => {
+      const blob = new Blob([JSON.stringify(getExportPayload(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `resumepad-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast('已导出 JSON');
+    };
+
+    $('#btnImport').onclick = () => $('#importFile').click();
+
+    $('#importFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = parseImportFile(JSON.parse(await file.text()));
+        const action = await showImportDialog(data);
+        if (!action) return;
+        if (action === 'merge') mergeImported(data);
+        else replaceImported(data);
+        await save();
+        renderList();
+        showView('welcome');
+        toast('导入成功');
+      } catch {
+        toast('导入失败：文件格式不对');
+      }
+      e.target.value = '';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea, [contenteditable="true"]') && e.key !== 'Escape') return;
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        startNewTask();
+      }
+      if (e.key === 't' || e.key === 'T') {
+        if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+        e.preventDefault();
+        toggleTheme();
+      }
+      if (e.key === 'Escape') {
+        if (!isFormVisible()) return;
+        e.preventDefault();
+        cancelFormEdit();
+      }
+    });
+
+    async function boot() {
+      initTheme();
+      initFormLinkPreviews();
+      initRichFields();
+      initResumeDblClick();
+      if (!window.indexedDB) {
+        toast('浏览器不支持 IndexedDB，请升级 Edge/Chrome');
+        return;
+      }
+      await migrateFromLocalStorage();
+      await load();
+      const historyBefore = history.length;
+      pruneHistory();
+      if (history.length < historyBefore) await persistData();
+      renderList();
+      showView('welcome');
+    }
+
+    boot();
+  </script>
+</body>
+</html>
