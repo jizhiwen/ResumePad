@@ -201,6 +201,8 @@
       font-weight: 500;
       font-size: 0.875rem;
       line-height: 1.4;
+      word-break: break-word;
+      white-space: pre-line;
     }
 
     .task-item .meta {
@@ -213,10 +215,9 @@
       font-size: 0.75rem;
       color: var(--muted);
       margin-top: 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-line;
     }
 
     .empty-list {
@@ -266,10 +267,6 @@
       cursor: text;
     }
 
-    .context-block .body.empty {
-      color: var(--muted);
-    }
-
     .context-block h3 {
       font-size: 0.6875rem;
       font-weight: 500;
@@ -285,31 +282,26 @@
       word-break: break-word;
     }
 
-    .linkified a,
-    .field-links a {
+    .linkified a {
       color: var(--ink);
       text-decoration: underline;
       text-underline-offset: 3px;
       word-break: break-all;
     }
 
-    .linkified a:hover,
-    .field-links a:hover { color: var(--accent-hover); }
+    .linkified a:hover { color: var(--accent-hover); }
 
-    .field-links {
-      margin-top: 8px;
-      font-size: 0.75rem;
-      line-height: 1.5;
+
+    .context-block .body.is-empty {
+      min-height: 1.25em;
     }
 
-    .field-links .sep { color: var(--border); margin: 0 6px; }
-
-    .context-block .refs {
-      font-family: var(--mono);
-      font-size: 0.8125rem;
+    .context-block .body.is-empty .empty-hint {
       color: var(--muted);
+      opacity: 0.6;
       white-space: pre-wrap;
     }
+
 
     .resume-actions {
       display: flex;
@@ -318,6 +310,50 @@
       margin-top: 32px;
       padding-top: 24px;
       border-top: 1px solid var(--border);
+    }
+
+    dialog.settings-dialog {
+      max-width: 420px;
+    }
+
+    .settings-section {
+      margin-bottom: 8px;
+    }
+
+    .settings-section h4 {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .summary-include-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+      gap: 6px 12px;
+    }
+
+    .summary-include-grid label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .summary-include-grid input {
+      margin: 0;
+      flex-shrink: 0;
+      accent-color: var(--ink);
+    }
+
+    .summary-include-hint {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.45;
     }
 
     .welcome {
@@ -354,12 +390,6 @@
     }
 
     .form-view { max-width: 36rem; padding: 0; }
-
-    .form-view h2 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 28px;
-    }
 
     .field { margin-bottom: 24px; }
 
@@ -419,6 +449,18 @@
       border-radius: var(--radius);
     }
 
+    .rich-input a.rich-auto-link {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      word-break: break-all;
+      cursor: pointer;
+    }
+
+    .rich-input a.rich-auto-link:hover {
+      color: var(--accent-hover);
+    }
+
     input:focus, textarea:focus {
       outline: none;
       border-bottom-color: var(--ink);
@@ -438,10 +480,6 @@
       border-radius: var(--radius);
     }
 
-    .rich-body.refs {
-      font-family: var(--mono);
-      font-size: 0.8125rem;
-    }
 
     .form-actions {
       display: flex;
@@ -522,6 +560,7 @@
       </button>
       <nav class="toolbar">
         <button type="button" id="btnTheme" class="ghost-theme" title="切换主题 (T)" aria-label="切换主题">Dark</button>
+        <button type="button" id="btnSettings" title="设置">设置</button>
         <button type="button" id="btnExport" title="导出 JSON">导出</button>
         <button type="button" id="btnImport">导入</button>
         <button type="button" id="btnNew" title="Switch (N)">Switch</button>
@@ -543,16 +582,15 @@
         <section class="welcome" id="welcomeView">
           <h2>选择任务</h2>
           <p class="welcome-lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
-          <p class="welcome-hint">需要切换任务时，点顶部 <strong>Switch</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词。</p>
+          <p class="welcome-hint">需要切换任务时，点顶部 <strong>Switch</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；摘要复制项在顶部 <strong>设置</strong> 中配置。</p>
         </section>
         <section class="resume-view hidden" id="resumeView"></section>
         <section class="form-view hidden" id="formView">
-          <h2 id="formTitle">封存</h2>
           <form id="taskForm">
             <input type="hidden" id="taskId" />
             <div class="field">
               <label for="title">任务名称 <span class="hint">— 一句话概括</span></label>
-              <input type="text" id="title" placeholder="例如：修复 ResumePad 导出 bug" autofocus />
+              <input type="text" id="title" placeholder="例如：修复 ResumePad 导出 bug" />
             </div>
             <div class="field">
               <label for="goal">要达成什么 <span class="hint">— 回来先读这个</span></label>
@@ -609,6 +647,14 @@
     </div>
   </dialog>
 
+  <dialog id="settingsDialog" class="settings-dialog">
+    <h3>设置</h3>
+    <div id="settingsSummaryIncludeHost"></div>
+    <div class="actions">
+      <button type="button" id="settingsClose">关闭</button>
+    </div>
+  </dialog>
+
   <script>
     const LEGACY_STORAGE_KEY = 'resumepad_tasks_v1';
     const THEME_KEY = 'resumepad_theme';
@@ -617,10 +663,142 @@
     const STORE = 'kv';
     const DATA_KEY = 'data';
     const HISTORY_RETENTION_DAYS = 14;
-    const DATA_VERSION = 2;
+    const DATA_VERSION = 3;
     const MAX_IMAGE_WIDTH = 1280;
+    /** 旧版仅存 localStorage；启动时迁入 IndexedDB settings */
+    const SUMMARY_INCLUDE_LS_KEY_LEGACY = 'resumepad_summary_include';
+    /** title 始终在摘要开头；以下为摘要可选字段（保存在应用数据 settings.summaryInclude） */
+    const DEFAULT_SUMMARY_INCLUDE = {
+      goal: true,
+      progress: true,
+      nextAction: true,
+      references: true,
+      blockers: true,
+      notes: true,
+      parkedAt: true,
+      completedAt: true,
+    };
+    const SUMMARY_INCLUDE_META = [
+      ['goal', '要达成什么'],
+      ['progress', '做到哪了'],
+      ['nextAction', '下一步 · 立刻做'],
+      ['references', '关键引用'],
+      ['blockers', '卡点 / 未决'],
+      ['notes', '备忘'],
+      ['parkedAt', '封存时间'],
+      ['completedAt', '完成时间'],
+    ];
+
+    /** 与应用数据一并持久化、导出 JSON */
+    const appSettings = {
+      summaryInclude: { ...DEFAULT_SUMMARY_INCLUDE },
+    };
+
+    function cloneDefaultSummaryInclude() {
+      return { ...DEFAULT_SUMMARY_INCLUDE };
+    }
+
+    function normalizeSummaryIncludeSlice(raw) {
+      const out = cloneDefaultSummaryInclude();
+      if (!raw || typeof raw !== 'object') return out;
+      for (const k of Object.keys(out)) {
+        if (typeof raw[k] === 'boolean') out[k] = raw[k];
+      }
+      return out;
+    }
+
+    function applySettingsFromStored(settingsRoot) {
+      appSettings.summaryInclude = normalizeSummaryIncludeSlice(settingsRoot?.summaryInclude);
+    }
+
+    function getSummaryInclude() {
+      return normalizeSummaryIncludeSlice(appSettings.summaryInclude);
+    }
+
+    function migrateLegacySummaryIncludeFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(SUMMARY_INCLUDE_LS_KEY_LEGACY);
+        if (!raw) return false;
+        const o = JSON.parse(raw);
+        if (o && typeof o === 'object') {
+          appSettings.summaryInclude = normalizeSummaryIncludeSlice(o);
+        }
+        localStorage.removeItem(SUMMARY_INCLUDE_LS_KEY_LEGACY);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function persistSummaryIncludeFromCheckboxes(container) {
+      const next = cloneDefaultSummaryInclude();
+      container.querySelectorAll('[data-summary-inc]').forEach((cb) => {
+        const k = cb.getAttribute('data-summary-inc');
+        if (k in next) next[k] = cb.checked;
+      });
+      appSettings.summaryInclude = next;
+      syncSummaryIncludeCheckboxUI($('#settingsSummaryIncludeHost'));
+      try {
+        await save();
+        toast('设置已保存');
+      } catch { /* toast 已由 persistData 处理 */ }
+    }
+
+    function syncSummaryIncludeCheckboxUI(root) {
+      if (!root || typeof root.querySelector !== 'function') return;
+      const inc = getSummaryInclude();
+      root.querySelectorAll('[data-summary-inc]').forEach((cb) => {
+        const k = cb.getAttribute('data-summary-inc');
+        if (k in inc) cb.checked = inc[k];
+      });
+    }
+
+    function bindSummaryIncludePanel(root) {
+      if (!root) return;
+      root.querySelectorAll('[data-summary-inc]').forEach((cb) => {
+        cb.addEventListener('change', () => persistSummaryIncludeFromCheckboxes(root));
+      });
+    }
+
+    function buildSummaryIncludeSettingsHtml() {
+      const inc = getSummaryInclude();
+      const checks = SUMMARY_INCLUDE_META.map(
+        ([key, label]) => `
+        <label>
+          <input type="checkbox" data-summary-inc="${key}" ${inc[key] ? 'checked' : ''} />
+          <span>${escapeHtml(label)}</span>
+        </label>`,
+      ).join('');
+      return `
+        <section class="settings-section">
+          <h4>摘要复制</h4>
+          <div class="summary-include-grid">${checks}</div>
+          <p class="summary-include-hint">任务标题始终复制；其余按勾选写入「摘要」剪贴板。设置写入 IndexedDB，并随<strong>导出 JSON</strong>一起备份。</p>
+        </section>`;
+    }
+
+    function initSettingsDialog() {
+      const host = $('#settingsSummaryIncludeHost');
+      if (!host) return;
+      host.innerHTML = buildSummaryIncludeSettingsHtml();
+      bindSummaryIncludePanel(host);
+      $('#btnSettings').addEventListener('click', () => {
+        syncSummaryIncludeCheckboxUI(host);
+        $('#settingsDialog').showModal();
+      });
+      $('#settingsClose').addEventListener('click', () => $('#settingsDialog').close());
+    }
+
     const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
 
+    const FIELD_PREVIEW_HINTS = {
+      goal: '这次工作的最终目标是什么？成功标准是什么？',
+      progress: '已经改了什么、验证过什么、有什么结论',
+      nextAction: '例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证',
+      references: '/home/zw/src/tools/ResumePad\nbranch: main',
+      blockers: '卡在哪里？需要谁/input？',
+      notes: '心态、时间限制、别忘的事…',
+    };
     const $ = (sel) => document.querySelector(sel);
 
     let tasks = [];
@@ -674,7 +852,14 @@
     }
 
     function getExportPayload() {
-      return { version: DATA_VERSION, tasks, history };
+      return {
+        version: DATA_VERSION,
+        tasks,
+        history,
+        settings: {
+          summaryInclude: { ...getSummaryInclude() },
+        },
+      };
     }
 
     function normalizeTask(raw) {
@@ -727,14 +912,29 @@
     }
 
     function htmlToPlain(html) {
+      const normalized = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/div>\s*<div[^>]*>/gi, '\n')
+        .replace(/<\/p>\s*<p[^>]*>/gi, '\n');
       const d = document.createElement('div');
-      d.innerHTML = html;
-      return (d.innerText || d.textContent || '').trim();
+      d.innerHTML = normalized;
+      return (d.innerText || d.textContent || '').replace(/\r\n?/g, '\n');
     }
 
     function fieldPlain(value) {
       if (!value) return '';
-      return isRichContent(value) ? htmlToPlain(value) : value.trim();
+      if (isRichContent(value)) return htmlToPlain(value).trim();
+      return value.replace(/\r\n?/g, '\n').trim();
+    }
+
+    function hasFieldContent(body) {
+      return fieldPlain(body).length > 0;
+    }
+
+    function listPreviewText(value) {
+      const s = fieldPlain(value);
+      if (!s) return '';
+      return s.replace(/\n{4,}/g, '\n\n\n');
     }
 
     function sanitizeRichHtml(html) {
@@ -756,6 +956,9 @@
           return img;
         }
         if (tag === 'br') return document.createElement('br');
+        if (tag === 'a') {
+          return document.createTextNode(node.textContent || '');
+        }
         if (tag === 'p' || tag === 'div' || tag === 'span') {
           const el = document.createElement(tag === 'span' ? 'span' : 'div');
           [...node.childNodes].forEach((ch) => {
@@ -790,7 +993,7 @@
       return sanitizeRichHtml(html);
     }
 
-    function setRichValue(id, value) {
+    function setRichValue(id, value, opts = {}) {
       const el = document.getElementById(id);
       if (!el) return;
       if (!value) {
@@ -802,6 +1005,7 @@
       } else {
         el.textContent = value;
       }
+      if (!opts.skipLinkify) scheduleLinkifyRichField(el);
     }
 
     function insertImageAtCursor(field, dataUrl) {
@@ -845,6 +1049,7 @@
       RICH_FIELDS.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
+        bindRichFieldLinkify(el);
         el.addEventListener('paste', async (e) => {
           const items = e.clipboardData?.items;
           if (!items) return;
@@ -900,17 +1105,37 @@
     async function load() {
       try {
         const data = await idb.get(DATA_KEY);
+        let hadStoredSummarySettings = false;
         if (data && typeof data === 'object') {
           tasks = (data.tasks || []).map(normalizeTask).filter(Boolean);
           history = (data.history || []).map(normalizeTask).filter(Boolean);
+          if (
+            data.settings &&
+            typeof data.settings.summaryInclude === 'object' &&
+            data.settings.summaryInclude !== null
+          ) {
+            applySettingsFromStored(data.settings);
+            hadStoredSummarySettings = true;
+          } else {
+            applySettingsFromStored(null);
+          }
         } else {
           tasks = [];
           history = [];
+          applySettingsFromStored(null);
+        }
+        if (hadStoredSummarySettings) {
+          try {
+            localStorage.removeItem(SUMMARY_INCLUDE_LS_KEY_LEGACY);
+          } catch { /* ignore */ }
+        } else if (migrateLegacySummaryIncludeFromLocalStorage()) {
+          await persistData();
         }
       } catch (e) {
         console.error(e);
         tasks = [];
         history = [];
+        applySettingsFromStored(null);
         toast('读取数据失败，已重置为空');
       }
     }
@@ -1023,11 +1248,145 @@
       }
     }
 
-    function extractUrls(text) {
-      if (!text) return [];
-      const re = /(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
-      const found = text.match(re) || [];
-      return [...new Set(found)];
+
+    const AUTO_LINK_RE = /(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
+
+    function createAutoLinkNode(url) {
+      const href = safeHref(url);
+      if (!href) return document.createTextNode(url);
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'rich-auto-link';
+      a.contentEditable = 'false';
+      a.textContent = url;
+      return a;
+    }
+
+    function linkifyTextToFragment(text) {
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      const re = new RegExp(AUTO_LINK_RE.source, AUTO_LINK_RE.flags);
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) {
+          frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        }
+        frag.appendChild(createAutoLinkNode(m[0]));
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) {
+        frag.appendChild(document.createTextNode(text.slice(last)));
+      }
+      return frag;
+    }
+
+    function captureFocusSnapshot() {
+      const el = document.activeElement;
+      if (!el || !document.body.contains(el)) return null;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        return { kind: 'input', el, start: el.selectionStart, end: el.selectionEnd };
+      }
+      const rich = el.closest?.('.rich-input');
+      if (rich) {
+        const sel = window.getSelection();
+        if (!sel?.rangeCount) return { kind: 'rich', el: rich, range: null };
+        const range = sel.getRangeAt(0);
+        if (!rich.contains(range.commonAncestorContainer)) {
+          return { kind: 'rich', el: rich, range: null };
+        }
+        return { kind: 'rich', el: rich, range: range.cloneRange() };
+      }
+      return { kind: 'element', el };
+    }
+
+    function restoreFocusSnapshot(snap) {
+      if (!snap?.el || !document.body.contains(snap.el)) return;
+      try {
+        if (snap.kind === 'input') {
+          snap.el.focus({ preventScroll: true });
+          snap.el.setSelectionRange(snap.start ?? 0, snap.end ?? 0);
+          return;
+        }
+        if (snap.kind === 'rich') {
+          snap.el.focus({ preventScroll: true });
+          if (snap.range) {
+            const sel = window.getSelection();
+            sel?.removeAllRanges();
+            sel?.addRange(snap.range);
+          }
+          return;
+        }
+        snap.el.focus({ preventScroll: true });
+      } catch {
+        /* range may be stale after DOM rewrite */
+      }
+    }
+
+    function linkifyAllRichFormFields() {
+      const snap = captureFocusSnapshot();
+      RICH_FIELDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) linkifyRichElement(el);
+      });
+      restoreFocusSnapshot(snap);
+    }
+
+    function linkifyRichElement(el) {
+      if (!el) return;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      let n;
+      while ((n = walker.nextNode())) {
+        if (n.parentElement?.closest('a.rich-auto-link, img')) continue;
+        if (!AUTO_LINK_RE.test(n.textContent || '')) continue;
+        AUTO_LINK_RE.lastIndex = 0;
+        nodes.push(n);
+      }
+      nodes.forEach((textNode) => {
+        const parent = textNode.parentNode;
+        if (!parent) return;
+        parent.replaceChild(linkifyTextToFragment(textNode.textContent), textNode);
+      });
+    }
+
+    const richLinkifyTimers = new WeakMap();
+
+    function scheduleLinkifyRichField(el) {
+      if (!el) return;
+      const prev = richLinkifyTimers.get(el);
+      if (prev) clearTimeout(prev);
+      richLinkifyTimers.set(
+        el,
+        setTimeout(() => {
+          const snap = el.contains(document.activeElement) ? captureFocusSnapshot() : null;
+          linkifyRichElement(el);
+          restoreFocusSnapshot(snap);
+        }, 200),
+      );
+    }
+
+    function bindRichFieldLinkify(el) {
+      if (!el || el.dataset.linkifyBound === '1') return;
+      el.dataset.linkifyBound = '1';
+      let composing = false;
+      el.addEventListener('compositionstart', () => {
+        composing = true;
+      });
+      el.addEventListener('compositionend', () => {
+        composing = false;
+        scheduleLinkifyRichField(el);
+      });
+      el.addEventListener('input', () => {
+        if (!composing) scheduleLinkifyRichField(el);
+      });
+      el.addEventListener('click', (e) => {
+        const a = e.target.closest('a.rich-auto-link');
+        if (!a) return;
+        e.preventDefault();
+        window.open(a.href, '_blank', 'noopener,noreferrer');
+      });
     }
 
     function linkifyHtml(escapedHtml) {
@@ -1042,65 +1401,28 @@
     }
 
     function block(label, body, opts = {}) {
-      const hasBody = body && String(body).trim();
-      if (!hasBody && !opts.field) return '';
       const cls = 'context-block';
       const sectionCls = opts.field ? `${cls} editable-block` : cls;
       const fieldAttr = opts.field ? ` data-field="${opts.field}"` : '';
       let inner;
-      if (!hasBody) {
-        inner = '<div class="body empty">—</div>';
+      if (!hasFieldContent(body)) {
+        const hintKey = opts.fieldKey ?? opts.field;
+        const hint =
+          opts.emptyHint ||
+          (hintKey && FIELD_PREVIEW_HINTS[hintKey]) ||
+          '';
+        const hintHtml = hint
+          ? `<span class="empty-hint">${escapeHtml(hint)}</span>`
+          : '';
+        inner = `<div class="body is-empty">${hintHtml}</div>`;
       } else if (isRichContent(body)) {
         const html = sanitizeRichHtml(body);
-        inner = opts.mono
-          ? `<pre class="refs rich-body linkified">${html}</pre>`
-          : `<div class="body rich-body linkified">${html}</div>`;
+        inner = `<div class="body rich-body linkified">${html}</div>`;
       } else {
         const linked = linkifyHtml(escapeHtml(body));
-        inner = opts.mono
-          ? `<pre class="refs linkified">${linked}</pre>`
-          : `<div class="body linkified">${linked}</div>`;
+        inner = `<div class="body linkified">${linked}</div>`;
       }
       return `<section class="${sectionCls}"${fieldAttr}><h3>${label}</h3>${inner}</section>`;
-    }
-
-    function fieldText(el) {
-      if (el.classList?.contains('rich-input')) return el.innerText || '';
-      return el.value || '';
-    }
-
-    function updateFieldLinks(el, preview) {
-      const urls = extractUrls(fieldText(el));
-      if (!urls.length) {
-        preview.classList.add('hidden');
-        preview.innerHTML = '';
-        return;
-      }
-      preview.classList.remove('hidden');
-      preview.innerHTML = urls.map((u, i) => {
-        const href = safeHref(u);
-        const link = href
-          ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(u)}</a>`
-          : escapeHtml(u);
-        return (i ? '<span class="sep">·</span>' : '') + link;
-      }).join('');
-    }
-
-    function refreshFormLinkPreviews() {
-      $('#taskForm').querySelectorAll('.rich-input, input[type="text"]').forEach((el) => {
-        const preview = el.parentElement.querySelector('.field-links');
-        if (preview) updateFieldLinks(el, preview);
-      });
-    }
-
-    function initFormLinkPreviews() {
-      $('#taskForm').querySelectorAll('.rich-input, input[type="text"]').forEach((el) => {
-        if (el.parentElement.querySelector('.field-links')) return;
-        const preview = document.createElement('div');
-        preview.className = 'field-links hidden';
-        el.parentElement.appendChild(preview);
-        el.addEventListener('input', () => updateFieldLinks(el, preview));
-      });
     }
 
     function countInlineImages(t) {
@@ -1113,18 +1435,19 @@
     }
 
     function buildSummary(t) {
+      const inc = getSummaryInclude();
       return [
         `# ${t.title}`,
         '',
-        t.goal && `## 目标\n${fieldPlain(t.goal)}`,
-        t.progress && `## 进度\n${fieldPlain(t.progress)}`,
-        t.nextAction && `## 下一步\n${fieldPlain(t.nextAction)}`,
-        t.references && `## 引用\n${fieldPlain(t.references)}`,
-        t.blockers && `## 卡点\n${fieldPlain(t.blockers)}`,
-        t.notes && `## 备忘\n${fieldPlain(t.notes)}`,
+        inc.goal && t.goal && `## 目标\n${fieldPlain(t.goal)}`,
+        inc.progress && t.progress && `## 进度\n${fieldPlain(t.progress)}`,
+        inc.nextAction && t.nextAction && `## 下一步\n${fieldPlain(t.nextAction)}`,
+        inc.references && t.references && `## 引用\n${fieldPlain(t.references)}`,
+        inc.blockers && t.blockers && `## 卡点\n${fieldPlain(t.blockers)}`,
+        inc.notes && t.notes && `## 备忘\n${fieldPlain(t.notes)}`,
         '',
-        `封存: ${formatFull(t.parkedAt)}`,
-        t.completedAt && `完成: ${formatFull(t.completedAt)}`,
+        inc.parkedAt && `封存: ${formatFull(t.parkedAt)}`,
+        inc.completedAt && t.completedAt && `完成: ${formatFull(t.completedAt)}`,
       ].filter(Boolean).join('\n');
     }
 
@@ -1170,9 +1493,10 @@
 
       $('#taskList').innerHTML = sorted.map((t) => {
         const active = !selectedFromHistory && t.id === selectedId ? ' active' : '';
-        const next = t.nextAction ? `<div class="next-preview">${escapeHtml(t.nextAction)}</div>` : '';
+        const nextPlain = listPreviewText(t.nextAction);
+        const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
         return `<li class="task-item${active}" data-id="${t.id}" data-kind="active">
-          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="title">${escapeHtml(listPreviewText(t.title))}</div>
           <div class="meta">封存于 ${formatRelative(t.parkedAt)}</div>
           ${next}
         </li>`;
@@ -1304,6 +1628,7 @@
         <button type="button" class="danger" id="btnDeleteHistory">删除</button>
       `
         : `
+        <button type="button" id="btnEditResume">编辑</button>
         <button type="button" id="btnCopyAgent">Agent</button>
         <button type="button" id="btnCopyResume">摘要</button>
         <button type="button" id="btnDoneResume">完成</button>
@@ -1313,12 +1638,12 @@
         ${doneBadge}
         <h2 class="resume-title${fromHistory ? '' : ' editable-block'}"${fromHistory ? '' : ' data-field="title"'}>${escapeHtml(t.title)}</h2>
         ${timeLine}
-        ${block('要达成什么', t.goal, { field: fromHistory ? null : 'goal' })}
-        ${block('做到哪了', t.progress, { field: fromHistory ? null : 'progress' })}
-        ${block('下一步 · 立刻做', t.nextAction, { field: fromHistory ? null : 'nextAction' })}
-        ${block('关键引用', t.references, { mono: true, field: fromHistory ? null : 'references' })}
-        ${block('卡点 / 未决', t.blockers, { field: fromHistory ? null : 'blockers' })}
-        ${block('备忘', t.notes, { field: fromHistory ? null : 'notes' })}
+        ${block('要达成什么', t.goal, { fieldKey: 'goal', field: fromHistory ? null : 'goal' })}
+        ${block('做到哪了', t.progress, { fieldKey: 'progress', field: fromHistory ? null : 'progress' })}
+        ${block('下一步 · 立刻做', t.nextAction, { fieldKey: 'nextAction', field: fromHistory ? null : 'nextAction' })}
+        ${block('关键引用', t.references, { fieldKey: 'references', field: fromHistory ? null : 'references' })}
+        ${block('卡点 / 未决', t.blockers, { fieldKey: 'blockers', field: fromHistory ? null : 'blockers' })}
+        ${block('备忘', t.notes, { fieldKey: 'notes', field: fromHistory ? null : 'notes' })}
         <div class="resume-actions">${actions}</div>
       `;
 
@@ -1328,6 +1653,7 @@
         $('#btnRestoreResume').onclick = () => restoreFromHistory(t.id);
         $('#btnDeleteHistory').onclick = () => deleteFromHistory(t.id);
       } else {
+        $('#btnEditResume').onclick = () => selectActiveTask(t.id);
         $('#btnDoneResume').onclick = () => markDone(t.id);
       }
     }
@@ -1388,11 +1714,18 @@
     function focusFormField(fieldId) {
       const el = fieldId ? document.getElementById(fieldId) : null;
       if (!el) return;
-      el.focus();
+      el.focus({ preventScroll: true });
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+        return;
+      }
       if (!el.classList?.contains('rich-input')) return;
       const range = document.createRange();
       range.selectNodeContents(el);
-      range.collapse(false);
+      const hasContent =
+        (el.textContent || '').trim().length > 0 || !!el.querySelector('img');
+      range.collapse(hasContent ? false : true);
       const sel = window.getSelection();
       sel?.removeAllRanges();
       sel?.addRange(range);
@@ -1408,19 +1741,19 @@
         selectedFromHistory = false;
       }
       const t = id ? tasks.find((x) => x.id === id) : null;
-      $('#formTitle').textContent = t ? t.title || 'Switch' : 'Switch';
       $('#taskId').value = t ? t.id : '';
       $('#title').value = t ? t.title : '';
-      setRichValue('goal', t ? t.goal || '' : '');
-      setRichValue('progress', t ? t.progress || '' : '');
-      setRichValue('nextAction', t ? t.nextAction || '' : '');
-      setRichValue('references', t ? t.references || '' : '');
-      setRichValue('blockers', t ? t.blockers || '' : '');
-      setRichValue('notes', t ? t.notes || '' : '');
+      const skip = { skipLinkify: true };
+      setRichValue('goal', t ? t.goal || '' : '', skip);
+      setRichValue('progress', t ? t.progress || '' : '', skip);
+      setRichValue('nextAction', t ? t.nextAction || '' : '', skip);
+      setRichValue('references', t ? t.references || '' : '', skip);
+      setRichValue('blockers', t ? t.blockers || '' : '', skip);
+      setRichValue('notes', t ? t.notes || '' : '', skip);
       showView('form');
-      refreshFormLinkPreviews();
       renderList();
       focusFormField(focusFieldId || 'title');
+      requestAnimationFrame(() => linkifyAllRichFormFields());
     }
 
     function initResumeDblClick() {
@@ -1506,17 +1839,27 @@
     function replaceImported(data) {
       tasks = (data.tasks || []).map(normalizeTask).filter(Boolean);
       history = (data.history || []).map(normalizeTask).filter(Boolean);
+      if (
+        data.settings &&
+        typeof data.settings.summaryInclude === 'object' &&
+        data.settings.summaryInclude !== null
+      ) {
+        applySettingsFromStored(data.settings);
+      } else {
+        applySettingsFromStored(null);
+      }
     }
 
     function parseImportFile(parsed) {
       if (Array.isArray(parsed)) {
-        return { version: 1, tasks: parsed, history: [] };
+        return { version: 1, tasks: parsed, history: [], settings: null };
       }
       if (parsed && typeof parsed === 'object') {
         return {
           version: parsed.version || 2,
           tasks: parsed.tasks || [],
           history: parsed.history || [],
+          settings: parsed.settings || null,
         };
       }
       throw new Error('invalid');
@@ -1646,7 +1989,6 @@
 
     async function boot() {
       initTheme();
-      initFormLinkPreviews();
       initRichFields();
       initResumeDblClick();
       if (!window.indexedDB) {
@@ -1655,6 +1997,7 @@
       }
       await migrateFromLocalStorage();
       await load();
+      initSettingsDialog();
       const historyBefore = history.length;
       pruneHistory();
       if (history.length < historyBefore) await persistData();

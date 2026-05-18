@@ -1,0 +1,84 @@
+{
+  "version": 3,
+  "tasks": [
+    {
+      "id": "demo-active-001",
+      "title": "ResumePad：导入示例与功能展示",
+      "goal": "验证 JSON 导入/合并是否正常，并覆盖主要 UI 场景（空字段、换行、富文本、链接）。",
+      "progress": "README 与 dummy.json 已准备。\n侧栏列表应显示多行预览，不出现 <div> 等标签字样。",
+      "nextAction": "在浏览器打开 index.html → 导入本文件 → 逐条点选封存查看预览与编辑。",
+      "references": "/home/you/src/ResumePad\nbranch: main\ndummy.json — 示例数据",
+      "blockers": "",
+      "notes": "导入时可选「合并到现有」或「覆盖现有」。",
+      "parkedAt": "2026-05-18T10:00:00.000Z",
+      "updatedAt": "2026-05-18T14:30:00.000Z",
+      "completedAt": null
+    },
+    {
+      "id": "demo-active-002",
+      "title": "带富文本与 URL 的封存",
+      "goal": "",
+      "progress": "<div>已在编辑区输入链接，保存为 HTML：</div><div>文档见 https://github.com/example/resumepad</div>",
+      "nextAction": "预览页点击链接应在新标签打开；编辑区输入 https:// 后应自动变为可点链接。",
+      "references": "",
+      "blockers": "等待 code review",
+      "notes": "本条用于演示<strong>部分字段为空</strong>时的占位提示。",
+      "parkedAt": "2026-05-17T08:15:00.000Z",
+      "updatedAt": "2026-05-17T16:45:00.000Z",
+      "completedAt": null
+    },
+    {
+      "id": "demo-active-003",
+      "title": "仅标题与下一步（极简封存）",
+      "goal": "",
+      "progress": "",
+      "nextAction": "读完 README 后删除本示例数据，或保留作回归测试。",
+      "references": "",
+      "blockers": "",
+      "notes": "",
+      "parkedAt": "2026-05-16T20:00:00.000Z",
+      "updatedAt": "2026-05-16T20:00:00.000Z",
+      "completedAt": null
+    }
+  ],
+  "history": [
+    {
+      "id": "demo-history-001",
+      "title": "已完成示例：修复导出 UTF-8 BOM",
+      "goal": "导出 JSON 在 Excel 中打开不乱码。",
+      "progress": "已在 export 逻辑加入 BOM，本地用 Edge 验证通过。",
+      "nextAction": "",
+      "references": "index.html — getExportPayload()",
+      "blockers": "",
+      "notes": "完成历史默认保留约 14 天。",
+      "parkedAt": "2026-05-10T09:00:00.000Z",
+      "updatedAt": "2026-05-12T11:20:00.000Z",
+      "completedAt": "2026-05-12T11:20:00.000Z"
+    },
+    {
+      "id": "demo-history-002",
+      "title": "已完成示例：侧栏多行预览",
+      "goal": "左侧列表正确显示换行，不截断为单行。",
+      "progress": "listPreviewText + white-space: pre-line",
+      "nextAction": "合并 PR",
+      "references": "",
+      "blockers": "",
+      "notes": "",
+      "parkedAt": "2026-05-08T14:00:00.000Z",
+      "updatedAt": "2026-05-09T10:00:00.000Z",
+      "completedAt": "2026-05-09T10:00:00.000Z"
+    }
+  ],
+  "settings": {
+    "summaryInclude": {
+      "goal": true,
+      "progress": true,
+      "nextAction": true,
+      "references": true,
+      "blockers": false,
+      "notes": false,
+      "parkedAt": true,
+      "completedAt": true
+    }
+  }
+}
