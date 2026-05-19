@@ -1,6 +1,7 @@
 const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { removeLegacyEdgeLayout } = require('./legacy-cleanup');
 
 const MIN_W = 640;
 const MIN_H = 400;
@@ -107,6 +108,7 @@ if (!gotLock) {
     if (process.platform === 'win32') {
       app.setAppUserModelId('app.resumepad.desktop');
     }
+    removeLegacyEdgeLayout(app.getPath('userData'));
     createWindow();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
