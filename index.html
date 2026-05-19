@@ -15,6 +15,10 @@
       if (/[?&]standalone(?:=1)?(?:&|$)/.test(location.search)) {
         document.documentElement.dataset.standalone = '1';
       }
+      var sw = parseInt(localStorage.getItem('resumepad_sidebar_width'), 10);
+      if (sw >= 160 && sw <= 480) {
+        document.documentElement.style.setProperty('--sidebar-width', sw + 'px');
+      }
     })();
   </script>
   <script>
@@ -62,6 +66,7 @@
   </script>
   <style>
     :root {
+      --sidebar-width: 220px;
       color-scheme: light;
       --bg: #fafafa;
       --surface: #fff;
@@ -165,6 +170,9 @@
     }
 
     button.brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       border: none;
       background: transparent;
       padding: 0;
@@ -174,6 +182,13 @@
     }
 
     button.brand:hover h1 { color: var(--accent-hover); }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: block;
+    }
 
     .brand h1 {
       font-size: 0.9375rem;
@@ -227,13 +242,42 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 220px 1fr;
+      grid-template-columns: var(--sidebar-width) 5px 1fr;
       flex: 1;
       border-top: 1px solid var(--border);
     }
 
+    .sidebar-resizer {
+      cursor: col-resize;
+      touch-action: none;
+      background: transparent;
+      position: relative;
+      margin: 0 -2px;
+      z-index: 1;
+    }
+
+    .sidebar-resizer::after {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .sidebar-resizer:hover,
+    .sidebar-resizer.is-dragging {
+      background: var(--muted-surface);
+    }
+
+    .sidebar-resizer.is-dragging::after {
+      background: var(--muted);
+    }
+
     @media (max-width: 720px) {
       .layout { grid-template-columns: 1fr; }
+      .sidebar-resizer { display: none; }
       .sidebar {
         border-right: none;
         border-bottom: 1px solid var(--border);
@@ -251,7 +295,7 @@
       padding: 16px 0;
       max-height: calc(100vh - 73px);
       overflow-y: auto;
-      border-right: 1px solid var(--border);
+      min-width: 0;
     }
 
     .sidebar h2 {
@@ -325,38 +369,59 @@
       .main { padding: 24px 20px 40px; }
     }
 
-    .resume-view { max-width: 36rem; padding: 0; }
+    .task-detail {
+      max-width: 36rem;
+      padding: 0;
+    }
 
-    .resume-view .badge {
+    .task-detail .badge {
+      display: block;
       font-size: 0.6875rem;
       color: var(--muted);
       margin-bottom: 16px;
     }
 
-    .resume-view .badge.done { color: var(--muted); }
+    .task-detail .badge.done { color: var(--muted); }
 
-    .resume-view h2 {
+    .task-detail #title.task-title {
       font-size: 1.375rem;
       font-weight: 600;
       letter-spacing: -0.02em;
-      margin-bottom: 6px;
+      margin: 0 0 6px;
       line-height: 1.3;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--ink);
+      min-height: 0;
     }
 
-    .resume-view .parked-at {
+    .task-detail #title.task-title:focus {
+      outline: none;
+    }
+
+    .task-detail .parked-at {
       color: var(--muted);
       font-size: 0.8125rem;
-      margin-bottom: 32px;
+      margin: 0 0 32px;
     }
 
-    .context-block { margin-bottom: 28px; }
+    .task-section {
+      margin-bottom: 28px;
+    }
 
-    .context-block.editable-block,
-    .resume-view h2.resume-title {
+    .task-section-title {
+      margin-bottom: 0;
+    }
+
+    .task-detail:not(.is-editing):not(.is-history) .task-section {
       cursor: text;
     }
 
-    .context-block h3 {
+    .task-section h3 {
+      display: block;
       font-size: 0.6875rem;
       font-weight: 500;
       letter-spacing: 0.04em;
@@ -365,10 +430,43 @@
       text-transform: none;
     }
 
-    .context-block .body {
+    .task-detail:not(.is-new) .title-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .task-detail .rich-input {
       font-size: 0.9375rem;
+      line-height: 1.55;
       white-space: pre-wrap;
       word-break: break-word;
+      width: 100%;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      overflow-y: visible;
+      min-height: 0;
+    }
+
+    .task-detail .rich-input:empty {
+      min-height: 1.25em;
+    }
+
+    .task-detail .rich-input:focus {
+      outline: none;
+    }
+
+    .task-detail.is-editing .task-section:focus-within h3 {
+      color: var(--ink);
     }
 
     .linkified a {
@@ -381,18 +479,9 @@
     .linkified a:hover { color: var(--accent-hover); }
 
 
-    .context-block .body.is-empty {
-      min-height: 1.25em;
-    }
-
-    .context-block .body.is-empty .empty-hint {
-      color: var(--muted);
-      opacity: 0.6;
-      white-space: pre-wrap;
-    }
-
-
-    .resume-actions {
+    .detail-actions,
+    .resume-actions,
+    .form-actions {
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
@@ -478,49 +567,7 @@
       background: var(--muted-surface);
     }
 
-    .form-view { max-width: 36rem; padding: 0; }
-
-    .field { margin-bottom: 24px; }
-
-    .field label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 500;
-      margin-bottom: 8px;
-      color: var(--muted);
-    }
-
-    .field .hint { font-weight: 400; }
-
-    input[type="text"], textarea, .rich-input {
-      width: 100%;
-      font: inherit;
-      font-size: 0.9375rem;
-      padding: 0 0 8px;
-      border: none;
-      border-bottom: 1px solid var(--border);
-      border-radius: 0;
-      background: transparent;
-      color: var(--ink);
-    }
-
-    textarea { resize: vertical; min-height: 64px; line-height: 1.55; }
-    textarea.tall { min-height: 88px; }
-
-    .rich-input {
-      min-height: 64px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-break: break-word;
-      overflow-y: auto;
-    }
-
-    .rich-input.tall { min-height: 88px; }
-
-    .rich-input:focus {
-      outline: none;
-      border-bottom-color: var(--ink);
-    }
+    .task-section-title { position: relative; }
 
     .rich-input:empty::before {
       content: attr(data-placeholder);
@@ -550,12 +597,7 @@
       color: var(--accent-hover);
     }
 
-    input:focus, textarea:focus {
-      outline: none;
-      border-bottom-color: var(--ink);
-    }
-
-    input::placeholder, textarea::placeholder {
+    #title::placeholder {
       color: var(--muted);
       opacity: 0.6;
     }
@@ -569,15 +611,6 @@
       border-radius: var(--radius);
     }
 
-
-    .form-actions {
-      display: flex;
-      gap: 4px;
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
 
     .kbd {
       font-family: var(--mono);
@@ -645,6 +678,7 @@
   <div class="app">
     <header class="topbar">
       <button type="button" class="brand" id="btnHome" title="首页">
+        <img class="brand-icon" src="icons/icon.svg" alt="" width="24" height="24" />
         <h1>ResumePad</h1>
       </button>
       <nav class="toolbar">
@@ -657,7 +691,7 @@
       </nav>
     </header>
 
-    <div class="layout">
+    <div class="layout" id="layout">
       <aside class="sidebar">
         <h2>封存 · <span id="taskCount">0</span></h2>
         <ul class="task-list" id="taskList"></ul>
@@ -666,6 +700,14 @@
         <ul class="task-list" id="historyList"></ul>
         <p class="empty-list hidden" id="emptyHistory">暂无完成记录</p>
       </aside>
+      <div
+        class="sidebar-resizer"
+        id="sidebarResizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖动调整列表宽度"
+        tabindex="0"
+      ></div>
 
       <main class="main" id="mainPanel">
         <section class="welcome" id="welcomeView">
@@ -673,39 +715,48 @@
           <p class="welcome-lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
           <p class="welcome-hint">需要切换任务时，点顶部 <strong>Switch</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；摘要复制项在顶部 <strong>设置</strong> 中配置。</p>
         </section>
-        <section class="resume-view hidden" id="resumeView"></section>
-        <section class="form-view hidden" id="formView">
+        <section class="task-detail hidden" id="taskDetailView">
           <form id="taskForm">
             <input type="hidden" id="taskId" />
-            <div class="field">
-              <label for="title">任务名称 <span class="hint">— 一句话概括</span></label>
-              <input type="text" id="title" placeholder="例如：修复 ResumePad 导出 bug" />
-            </div>
-            <div class="field">
-              <label for="goal">要达成什么 <span class="hint">— 回来先读这个</span></label>
-              <div id="goal" class="rich-input tall" contenteditable="true" data-placeholder="这次工作的最终目标是什么？成功标准是什么？"></div>
-            </div>
-            <div class="field">
-              <label for="progress">做到哪了 <span class="hint">— 已完成的、刚试过的</span></label>
-              <div id="progress" class="rich-input tall" contenteditable="true" data-placeholder="已经改了什么、验证过什么、有什么结论"></div>
-            </div>
-            <div class="field">
-              <label for="nextAction">下一步只做一件事 <span class="hint">— 恢复后立刻动手</span></label>
+            <span class="badge hidden" id="detailBadge">封存中</span>
+            <section class="task-section task-section-title" data-field="title">
+              <h3 class="title-label">任务名称</h3>
+              <div
+                id="title"
+                class="task-title rich-input"
+                contenteditable="true"
+                data-placeholder="例如：修复 ResumePad 导出 bug"
+                role="textbox"
+                aria-label="任务名称"
+              ></div>
+            </section>
+            <p class="parked-at hidden" id="detailMeta"></p>
+            <section class="task-section" data-field="goal">
+              <h3>要达成什么</h3>
+              <div id="goal" class="rich-input" contenteditable="true" data-placeholder="这次工作的最终目标是什么？成功标准是什么？"></div>
+            </section>
+            <section class="task-section" data-field="progress">
+              <h3>做到哪了</h3>
+              <div id="progress" class="rich-input" contenteditable="true" data-placeholder="已经改了什么、验证过什么、有什么结论"></div>
+            </section>
+            <section class="task-section" data-field="nextAction">
+              <h3>下一步 · 立刻做</h3>
               <div id="nextAction" class="rich-input" contenteditable="true" data-placeholder="例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证"></div>
-            </div>
-            <div class="field">
-              <label for="references">关键引用 <span class="hint">— 路径、分支、URL、命令</span></label>
-              <div id="references" class="rich-input tall refs" contenteditable="true" data-placeholder="/home/zw/src/tools/ResumePad&#10;branch: main"></div>
-            </div>
-            <div class="field">
-              <label for="blockers">卡点 / 未决问题</label>
+            </section>
+            <section class="task-section" data-field="references">
+              <h3>关键引用</h3>
+              <div id="references" class="rich-input refs" contenteditable="true" data-placeholder="/home/zw/src/tools/ResumePad&#10;branch: main"></div>
+            </section>
+            <section class="task-section" data-field="blockers">
+              <h3>卡点 / 未决</h3>
               <div id="blockers" class="rich-input" contenteditable="true" data-placeholder="卡在哪里？需要谁/input？"></div>
-            </div>
-            <div class="field">
-              <label for="notes">其他备忘</label>
+            </section>
+            <section class="task-section" data-field="notes">
+              <h3>备忘</h3>
               <div id="notes" class="rich-input" contenteditable="true" data-placeholder="心态、时间限制、别忘的事…"></div>
-            </div>
-            <div class="form-actions">
+            </section>
+            <div class="detail-actions" id="detailViewActions"></div>
+            <div class="detail-actions hidden" id="detailEditActions">
               <button type="submit" id="btnSaveForm">保存</button>
               <button type="button" id="btnCancelForm">取消</button>
             </div>
@@ -895,6 +946,8 @@
     let selectedId = null;
     let selectedFromHistory = false;
     let editingId = null;
+    let detailLoadedId = null;
+    let detailLoadedFromHistory = false;
     let pendingImport = null;
 
     const idb = {
@@ -1135,7 +1188,7 @@
     }
 
     function initRichFields() {
-      RICH_FIELDS.forEach((id) => {
+      ['title', ...RICH_FIELDS].forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
         bindRichFieldLinkify(el);
@@ -1276,6 +1329,102 @@
       $('#btnTheme').addEventListener('click', toggleTheme);
     }
 
+    const SIDEBAR_WIDTH_KEY = 'resumepad_sidebar_width';
+    const SIDEBAR_WIDTH_MIN = 160;
+    const SIDEBAR_WIDTH_MAX = 480;
+    const SIDEBAR_WIDTH_DEFAULT = 220;
+    const SIDEBAR_RESIZE_MQ = '(max-width: 720px)';
+
+    function setSidebarWidth(px) {
+      const w = Math.round(Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, px)));
+      document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+      return w;
+    }
+
+    function initSidebarResize() {
+      const layout = $('#layout');
+      const resizer = $('#sidebarResizer');
+      if (!layout || !resizer) return;
+
+      const mql = window.matchMedia(SIDEBAR_RESIZE_MQ);
+      if (mql.matches) return;
+
+      let dragging = false;
+      let currentWidth = 0;
+
+      function persistWidth(w) {
+        try {
+          localStorage.setItem(SIDEBAR_WIDTH_KEY, String(w));
+        } catch { /* layout only */ }
+      }
+
+      function widthFromPointer(clientX) {
+        return setSidebarWidth(clientX - layout.getBoundingClientRect().left);
+      }
+
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        resizer.classList.remove('is-dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        persistWidth(currentWidth);
+      }
+
+      resizer.addEventListener('pointerdown', (e) => {
+        if (mql.matches) return;
+        e.preventDefault();
+        resizer.setPointerCapture(e.pointerId);
+        dragging = true;
+        currentWidth = widthFromPointer(e.clientX);
+        resizer.classList.add('is-dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      resizer.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        currentWidth = widthFromPointer(e.clientX);
+      });
+
+      resizer.addEventListener('pointerup', endDrag);
+      resizer.addEventListener('pointercancel', endDrag);
+
+      resizer.addEventListener('dblclick', () => {
+        if (mql.matches) return;
+        currentWidth = setSidebarWidth(SIDEBAR_WIDTH_DEFAULT);
+        persistWidth(currentWidth);
+      });
+
+      resizer.addEventListener('keydown', (e) => {
+        if (mql.matches) return;
+        let delta = 0;
+        if (e.key === 'ArrowLeft') delta = -16;
+        else if (e.key === 'ArrowRight') delta = 16;
+        else if (e.key === 'Home') {
+          currentWidth = setSidebarWidth(SIDEBAR_WIDTH_MIN);
+          persistWidth(currentWidth);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === 'End') {
+          currentWidth = setSidebarWidth(SIDEBAR_WIDTH_MAX);
+          persistWidth(currentWidth);
+          e.preventDefault();
+          return;
+        }
+        if (!delta) return;
+        e.preventDefault();
+        const parsed = parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'),
+          10,
+        );
+        const base = Number.isFinite(parsed) ? parsed : SIDEBAR_WIDTH_DEFAULT;
+        currentWidth = setSidebarWidth(base + delta);
+        persistWidth(currentWidth);
+      });
+    }
+
     function formatRelative(iso) {
       const d = new Date(iso);
       const diff = Date.now() - d.getTime();
@@ -1294,6 +1443,14 @@
         year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit',
       });
+    }
+
+    /** 预览 / 编辑共用，避免切换时时间行文案或换行不一致 */
+    function formatParkedTimeLine(t, fromHistory) {
+      if (fromHistory) {
+        return `封存于 ${formatFull(t.parkedAt)} · 完成于 ${formatFull(t.completedAt)}（${formatRelative(t.completedAt)}）`;
+      }
+      return `封存于 ${formatFull(t.parkedAt)}（${formatRelative(t.parkedAt)}）`;
     }
 
     function toast(msg) {
@@ -1415,7 +1572,7 @@
 
     function linkifyAllRichFormFields() {
       const snap = captureFocusSnapshot();
-      RICH_FIELDS.forEach((id) => {
+      ['title', ...RICH_FIELDS].forEach((id) => {
         const el = document.getElementById(id);
         if (el) linkifyRichElement(el);
       });
@@ -1610,13 +1767,19 @@
       });
     }
 
-    function isFormVisible() {
-      return !$('#formView').classList.contains('hidden');
+    function isTaskEditing() {
+      return !!$('#taskDetailView')?.classList.contains('is-editing');
+    }
+
+    function getTitleValue() {
+      const el = $('#title');
+      if (!el) return '';
+      return (el.textContent || '').replace(/\u200b/g, '').trim();
     }
 
     function getFormPayload() {
       return {
-        title: $('#title').value.trim(),
+        title: getTitleValue(),
         goal: getRichValue('goal'),
         progress: getRichValue('progress'),
         nextAction: getRichValue('nextAction'),
@@ -1627,7 +1790,7 @@
     }
 
     async function saveCurrentForm({ silent = false } = {}) {
-      if (!isFormVisible()) return { ok: true, skipped: true };
+      if (!isTaskEditing()) return { ok: true, skipped: true };
       const payload = getFormPayload();
       const existingId = $('#taskId').value;
       if (!payload.title) {
@@ -1668,15 +1831,19 @@
 
     async function navigateToTask(id, fromHistory) {
       if (id === selectedId && fromHistory === selectedFromHistory) {
-        if (isFormVisible() && !fromHistory && $('#taskId').value === id) {
+        if (isTaskEditing() && !fromHistory && $('#taskId').value === id) {
           const result = await saveCurrentForm({ silent: true });
           if (!result.ok) return;
-          selectActiveResume(id);
+          const t = findTask(id, false);
+          editingId = null;
+          setTaskDetailMode(false, {});
+          if (t) bindTaskDetailActions(t, false);
+          linkifyAllRichFormFields();
         }
         return;
       }
 
-      if (isFormVisible()) {
+      if (isTaskEditing()) {
         const formTaskId = $('#taskId').value;
         const switching = fromHistory || id !== formTaskId;
         if (switching) {
@@ -1691,8 +1858,7 @@
 
     function showView(name) {
       $('#welcomeView').classList.toggle('hidden', name !== 'welcome');
-      $('#resumeView').classList.toggle('hidden', name !== 'resume');
-      $('#formView').classList.toggle('hidden', name !== 'form');
+      $('#taskDetailView').classList.toggle('hidden', name !== 'task');
     }
 
     function findTask(id, fromHistory) {
@@ -1701,50 +1867,95 @@
         : tasks.find((x) => x.id === id);
     }
 
-    function renderResumeView(t, fromHistory) {
-      const doneBadge = fromHistory
-        ? '<span class="badge done">已完成</span>'
-        : '<span class="badge">封存中</span>';
-      const timeLine = fromHistory
-        ? `<p class="parked-at">封存于 ${formatFull(t.parkedAt)} · 完成于 ${formatFull(t.completedAt)}（${formatRelative(t.completedAt)}）</p>`
-        : `<p class="parked-at">封存于 ${formatFull(t.parkedAt)}（${formatRelative(t.parkedAt)}）</p>`;
+    function populateTaskDetail(t, fromHistory) {
+      $('#taskId').value = t.id;
+      const titleEl = $('#title');
+      if (titleEl) titleEl.textContent = t.title || '';
+      const skip = { skipLinkify: true };
+      RICH_FIELDS.forEach((id) => setRichValue(id, t[id] || '', skip));
+      const badge = $('#detailBadge');
+      if (fromHistory) {
+        badge.textContent = '已完成';
+        badge.className = 'badge done';
+      } else {
+        badge.textContent = '封存中';
+        badge.className = 'badge';
+      }
+      badge.classList.remove('hidden');
+      const meta = $('#detailMeta');
+      meta.textContent = formatParkedTimeLine(t, fromHistory);
+      meta.classList.remove('hidden');
+    }
 
-      const actions = fromHistory
-        ? `
+    function clearTaskDetailForNew() {
+      $('#taskId').value = '';
+      const titleEl = $('#title');
+      if (titleEl) titleEl.textContent = '';
+      const skip = { skipLinkify: true };
+      RICH_FIELDS.forEach((id) => setRichValue(id, '', skip));
+      $('#detailBadge').classList.add('hidden');
+      $('#detailMeta').classList.add('hidden');
+    }
+
+    function setTaskDetailMode(editing, { fromHistory = false, isNew = false, focusField = null } = {}) {
+      const detail = $('#taskDetailView');
+      if (!detail) return;
+      const canEdit = editing && !fromHistory;
+      detail.classList.toggle('is-editing', canEdit);
+      detail.classList.toggle('is-history', fromHistory);
+      detail.classList.toggle('is-new', isNew);
+      $('#detailViewActions').classList.toggle('hidden', canEdit || isNew);
+      $('#detailEditActions').classList.toggle('hidden', !canEdit);
+      if (isNew) {
+        $('#detailBadge').classList.add('hidden');
+        $('#detailMeta').classList.add('hidden');
+      }
+      const titleEl = $('#title');
+      if (titleEl) titleEl.contentEditable = canEdit ? 'true' : 'false';
+      RICH_FIELDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.contentEditable = canEdit ? 'true' : 'false';
+      });
+      if (!canEdit) linkifyAllRichFormFields();
+      if (focusField) requestAnimationFrame(() => focusFormField(focusField));
+      else if (canEdit && isNew) requestAnimationFrame(() => focusFormField('title'));
+    }
+
+    function bindTaskDetailActions(t, fromHistory) {
+      const host = $('#detailViewActions');
+      if (!host || !t) return;
+      if (fromHistory) {
+        host.innerHTML = `
         <button type="button" id="btnCopyAgent">Agent</button>
         <button type="button" id="btnCopyResume">摘要</button>
         <button type="button" id="btnRestoreResume">恢复</button>
         <button type="button" class="danger" id="btnDeleteHistory">删除</button>
-      `
-        : `
+      `;
+        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
+        $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
+        $('#btnRestoreResume').onclick = () => restoreFromHistory(t.id);
+        $('#btnDeleteHistory').onclick = () => deleteFromHistory(t.id);
+      } else {
+        host.innerHTML = `
         <button type="button" id="btnEditResume">编辑</button>
         <button type="button" id="btnCopyAgent">Agent</button>
         <button type="button" id="btnCopyResume">摘要</button>
         <button type="button" id="btnDoneResume">完成</button>
       `;
-
-      $('#resumeView').innerHTML = `
-        ${doneBadge}
-        <h2 class="resume-title${fromHistory ? '' : ' editable-block'}"${fromHistory ? '' : ' data-field="title"'}>${escapeHtml(t.title)}</h2>
-        ${timeLine}
-        ${block('要达成什么', t.goal, { fieldKey: 'goal', field: fromHistory ? null : 'goal' })}
-        ${block('做到哪了', t.progress, { fieldKey: 'progress', field: fromHistory ? null : 'progress' })}
-        ${block('下一步 · 立刻做', t.nextAction, { fieldKey: 'nextAction', field: fromHistory ? null : 'nextAction' })}
-        ${block('关键引用', t.references, { fieldKey: 'references', field: fromHistory ? null : 'references' })}
-        ${block('卡点 / 未决', t.blockers, { fieldKey: 'blockers', field: fromHistory ? null : 'blockers' })}
-        ${block('备忘', t.notes, { fieldKey: 'notes', field: fromHistory ? null : 'notes' })}
-        <div class="resume-actions">${actions}</div>
-      `;
-
-      $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
-      $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
-      if (fromHistory) {
-        $('#btnRestoreResume').onclick = () => restoreFromHistory(t.id);
-        $('#btnDeleteHistory').onclick = () => deleteFromHistory(t.id);
-      } else {
-        $('#btnEditResume').onclick = () => selectActiveTask(t.id);
+        $('#btnEditResume').onclick = () => enterTaskEdit();
+        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
+        $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
         $('#btnDoneResume').onclick = () => markDone(t.id);
       }
+    }
+
+    function enterTaskEdit(focusFieldId = null) {
+      if (!selectedId || selectedFromHistory) return;
+      const t = findTask(selectedId, false);
+      if (!t) return;
+      editingId = selectedId;
+      setTaskDetailMode(true, { focusField: focusFieldId });
+      bindTaskDetailActions(t, false);
     }
 
     function selectHistoryTask(id) {
@@ -1755,13 +1966,18 @@
       if (!t) {
         selectedId = null;
         selectedFromHistory = false;
+        detailLoadedId = null;
         showView('welcome');
         renderList();
         return;
       }
+      populateTaskDetail(t, true);
+      detailLoadedId = id;
+      detailLoadedFromHistory = true;
       renderList();
-      showView('resume');
-      renderResumeView(t, true);
+      setTaskDetailMode(false, { fromHistory: true });
+      bindTaskDetailActions(t, true);
+      showView('task');
     }
 
     function selectActiveResume(id) {
@@ -1771,19 +1987,24 @@
       const t = findTask(id, false);
       if (!t) {
         selectedId = null;
+        detailLoadedId = null;
         showView('welcome');
         renderList();
         return;
       }
+      const same = detailLoadedId === id && detailLoadedFromHistory === false;
+      if (!same) populateTaskDetail(t, false);
+      detailLoadedId = id;
+      detailLoadedFromHistory = false;
       renderList();
-      showView('resume');
-      renderResumeView(t, false);
+      setTaskDetailMode(false, { fromHistory: false });
+      bindTaskDetailActions(t, false);
+      showView('task');
     }
 
     function selectActiveTask(id, focusFieldId = null) {
       selectedId = id;
       selectedFromHistory = false;
-      editingId = id;
       const t = findTask(id, false);
       if (!t) {
         selectedId = null;
@@ -1791,8 +2012,15 @@
         renderList();
         return;
       }
+      const same = detailLoadedId === id && detailLoadedFromHistory === false;
+      if (!same) populateTaskDetail(t, false);
+      detailLoadedId = id;
+      detailLoadedFromHistory = false;
+      editingId = id;
       renderList();
-      openForm(id, focusFieldId);
+      setTaskDetailMode(true, { focusField: focusFieldId });
+      bindTaskDetailActions(t, false);
+      showView('task');
     }
 
     function showActiveResume() {
@@ -1821,43 +2049,36 @@
     }
 
     function openForm(id = null, focusFieldId = null) {
-      editingId = id;
       if (id) {
-        selectedId = id;
-        selectedFromHistory = false;
-      } else {
-        selectedId = null;
-        selectedFromHistory = false;
+        selectActiveTask(id, focusFieldId);
+        return;
       }
-      const t = id ? tasks.find((x) => x.id === id) : null;
-      $('#taskId').value = t ? t.id : '';
-      $('#title').value = t ? t.title : '';
-      const skip = { skipLinkify: true };
-      setRichValue('goal', t ? t.goal || '' : '', skip);
-      setRichValue('progress', t ? t.progress || '' : '', skip);
-      setRichValue('nextAction', t ? t.nextAction || '' : '', skip);
-      setRichValue('references', t ? t.references || '' : '', skip);
-      setRichValue('blockers', t ? t.blockers || '' : '', skip);
-      setRichValue('notes', t ? t.notes || '' : '', skip);
-      showView('form');
+      editingId = null;
+      selectedId = null;
+      selectedFromHistory = false;
+      detailLoadedId = null;
+      detailLoadedFromHistory = false;
+      clearTaskDetailForNew();
       renderList();
-      focusFormField(focusFieldId || 'title');
-      requestAnimationFrame(() => linkifyAllRichFormFields());
+      setTaskDetailMode(true, { isNew: true, focusField: 'title' });
+      $('#detailViewActions').innerHTML = '';
+      showView('task');
     }
 
-    function initResumeDblClick() {
-      $('#resumeView').addEventListener('dblclick', (e) => {
+    function initTaskDetailDblClick() {
+      $('#taskDetailView').addEventListener('dblclick', (e) => {
         if (selectedFromHistory || !selectedId) return;
-        if (e.target.closest('.resume-actions, button, a')) return;
+        if ($('#taskDetailView').classList.contains('is-editing')) return;
+        if (e.target.closest('.detail-actions, button, a.rich-auto-link')) return;
         const block = e.target.closest('[data-field]');
         if (!block) return;
         e.preventDefault();
-        selectActiveTask(selectedId, block.dataset.field);
+        enterTaskEdit(block.dataset.field);
       });
     }
 
     async function markDone(id) {
-      if (isFormVisible() && $('#taskId').value === id) {
+      if (isTaskEditing() && $('#taskId').value === id) {
         const result = await saveCurrentForm({ silent: true });
         if (!result.ok) return;
       }
@@ -1980,7 +2201,7 @@
     }
 
     async function goWelcome() {
-      if (isFormVisible()) {
+      if (isTaskEditing()) {
         const existingId = $('#taskId').value;
         if (existingId) {
           const result = await saveCurrentForm({ silent: true });
@@ -1990,6 +2211,8 @@
       editingId = null;
       selectedId = null;
       selectedFromHistory = false;
+      detailLoadedId = null;
+      detailLoadedFromHistory = false;
       showView('welcome');
       renderList();
     }
@@ -1997,7 +2220,14 @@
     function cancelFormEdit() {
       const existingId = $('#taskId').value;
       if (existingId) {
-        selectActiveResume(existingId);
+        const t = findTask(existingId, false);
+        if (t) populateTaskDetail(t, false);
+        editingId = null;
+        detailLoadedId = existingId;
+        detailLoadedFromHistory = false;
+        setTaskDetailMode(false, { fromHistory: false });
+        bindTaskDetailActions(t, false);
+        linkifyAllRichFormFields();
         return;
       }
       goWelcome();
@@ -2006,8 +2236,18 @@
     async function submitFormEdit() {
       const result = await saveCurrentForm({ silent: false });
       if (!result.ok) return;
-      if (result.id) selectActiveResume(result.id);
-      else showView('welcome');
+      if (result.id) {
+        const t = findTask(result.id, false);
+        editingId = null;
+        detailLoadedId = result.id;
+        detailLoadedFromHistory = false;
+        setTaskDetailMode(false, { fromHistory: false });
+        if (t) bindTaskDetailActions(t, false);
+        linkifyAllRichFormFields();
+      } else {
+        detailLoadedId = null;
+        showView('welcome');
+      }
     }
 
     $('#taskForm').addEventListener('submit', (e) => {
@@ -2017,7 +2257,7 @@
     $('#btnCancelForm').onclick = () => cancelFormEdit();
 
     async function startNewTask() {
-      if (isFormVisible()) {
+      if (isTaskEditing()) {
         const result = await saveCurrentForm({ silent: true });
         if (!result.ok) return;
       }
@@ -2070,7 +2310,7 @@
         toggleTheme();
       }
       if (e.key === 'Escape') {
-        if (!isFormVisible()) return;
+        if (!isTaskEditing()) return;
         e.preventDefault();
         cancelFormEdit();
       }
@@ -2078,8 +2318,9 @@
 
     async function boot() {
       initTheme();
+      initSidebarResize();
       initRichFields();
-      initResumeDblClick();
+      initTaskDetailDblClick();
       if (!window.indexedDB) {
         toast('浏览器不支持 IndexedDB，请升级 Edge/Chrome');
         return;
