@@ -390,12 +390,13 @@
       margin: 0 0 6px;
       line-height: 1.3;
       width: 100%;
-      border: none;
-      border-radius: 0;
+      box-sizing: border-box;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
       background: transparent;
-      padding: 0;
+      padding: 10px 12px;
       color: var(--ink);
-      min-height: 0;
+      min-height: 2.75rem;
     }
 
     .task-detail #title.task-title:focus {
@@ -448,21 +449,57 @@
       white-space: pre-wrap;
       word-break: break-word;
       width: 100%;
-      padding: 0;
-      border: none;
-      border-radius: 0;
+      box-sizing: border-box;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
       background: transparent;
+      padding: 10px 12px;
       color: var(--ink);
       overflow-y: visible;
-      min-height: 0;
+      min-height: 3.25rem;
     }
 
-    .task-detail .rich-input:empty {
-      min-height: 1.25em;
+    .task-detail .task-section[data-field="goal"] .rich-input,
+    .task-detail .task-section[data-field="progress"] .rich-input,
+    .task-detail .task-section[data-field="references"] .rich-input {
+      min-height: 5.5rem;
     }
 
     .task-detail .rich-input:focus {
       outline: none;
+    }
+
+    .task-detail [contenteditable]::spelling-error,
+    .task-detail [contenteditable]::grammar-error {
+      text-decoration: none;
+      background: transparent;
+    }
+
+    .task-detail:not(.is-editing) .rich-input.is-field-empty::before,
+    .task-detail:not(.is-editing) #title.task-title.is-field-empty::before {
+      content: attr(data-preview-hint);
+      color: var(--muted);
+      opacity: 0.42;
+    }
+
+    .task-detail.is-editing #title.task-title,
+    .task-detail.is-editing .rich-input {
+      border-color: var(--border);
+      background: var(--muted-surface);
+    }
+
+    .task-detail.is-editing .rich-input.is-field-empty::before,
+    .task-detail.is-editing #title.task-title.is-field-empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    .task-detail.is-editing #title.task-title:focus,
+    .task-detail.is-editing .rich-input:focus,
+    .task-detail.is-editing .task-section:focus-within .rich-input {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 1px var(--ink);
     }
 
     .task-detail.is-editing .task-section:focus-within h3 {
@@ -526,6 +563,26 @@
       accent-color: var(--ink);
     }
 
+    .locale-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+
+    .locale-options label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .locale-options input {
+      margin: 0;
+      accent-color: var(--ink);
+    }
+
     .summary-include-hint {
       grid-column: 1 / -1;
       margin-top: 10px;
@@ -569,10 +626,8 @@
 
     .task-section-title { position: relative; }
 
-    .rich-input:empty::before {
-      content: attr(data-placeholder);
-      color: var(--muted);
-      opacity: 0.6;
+    .task-detail .rich-input.is-field-empty::before,
+    .task-detail #title.task-title.is-field-empty::before {
       pointer-events: none;
     }
 
@@ -677,88 +732,85 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <button type="button" class="brand" id="btnHome" title="首页">
+      <button type="button" class="brand" id="btnHome" data-i18n-title="nav.homeTitle">
         <img class="brand-icon" src="icons/icon.svg" alt="" width="24" height="24" />
         <h1>ResumePad</h1>
       </button>
       <nav class="toolbar">
-        <button type="button" id="btnTheme" class="ghost-theme" title="切换主题 (T)" aria-label="切换主题">Dark</button>
-        <button type="button" id="btnSettings" title="设置">设置</button>
-        <button type="button" id="btnExport" title="导出 JSON">导出</button>
-        <button type="button" id="btnImport">导入</button>
-        <button type="button" id="btnNew" title="Switch (N)">Switch</button>
+        <button type="button" id="btnSettings" data-i18n="nav.settings" data-i18n-title="nav.settingsTitle">设置</button>
+        <button type="button" id="btnExport" data-i18n="nav.export" data-i18n-title="nav.exportTitle">导出</button>
+        <button type="button" id="btnImport" data-i18n="nav.import">导入</button>
+        <button type="button" id="btnNew" data-i18n="nav.switch" data-i18n-title="nav.switchTitle">Switch</button>
         <input type="file" id="importFile" accept=".json" class="hidden" />
       </nav>
     </header>
 
     <div class="layout" id="layout">
       <aside class="sidebar">
-        <h2>封存 · <span id="taskCount">0</span></h2>
+        <h2><span data-i18n="sidebar.parked">封存</span> · <span id="taskCount">0</span></h2>
         <ul class="task-list" id="taskList"></ul>
-        <p class="empty-list hidden" id="emptyList">暂无 · <span class="kbd">N</span> Switch</p>
-        <h2 class="history-heading">完成 · <span id="historyCount">0</span></h2>
+        <p class="empty-list hidden" id="emptyList"></p>
+        <h2 class="history-heading"><span data-i18n="sidebar.completed">完成</span> · <span id="historyCount">0</span></h2>
         <ul class="task-list" id="historyList"></ul>
-        <p class="empty-list hidden" id="emptyHistory">暂无完成记录</p>
+        <p class="empty-list hidden" id="emptyHistory"></p>
       </aside>
       <div
         class="sidebar-resizer"
         id="sidebarResizer"
         role="separator"
         aria-orientation="vertical"
-        aria-label="拖动调整列表宽度"
+        data-i18n-aria="sidebar.resizerLabel"
         tabindex="0"
       ></div>
 
       <main class="main" id="mainPanel">
         <section class="welcome" id="welcomeView">
-          <h2>选择任务</h2>
-          <p class="welcome-lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
-          <p class="welcome-hint">需要切换任务时，点顶部 <strong>Switch</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；摘要复制项在顶部 <strong>设置</strong> 中配置。</p>
+          <h2 data-i18n="welcome.title">选择任务</h2>
+          <p class="welcome-lead" data-i18n="welcome.lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
+          <p class="welcome-hint" id="welcomeHint"></p>
         </section>
         <section class="task-detail hidden" id="taskDetailView">
           <form id="taskForm">
             <input type="hidden" id="taskId" />
             <span class="badge hidden" id="detailBadge">封存中</span>
             <section class="task-section task-section-title" data-field="title">
-              <h3 class="title-label">任务名称</h3>
+              <h3 class="title-label" data-i18n-field="title">任务名称</h3>
               <div
                 id="title"
                 class="task-title rich-input"
                 contenteditable="true"
-                data-placeholder="例如：修复 ResumePad 导出 bug"
                 role="textbox"
-                aria-label="任务名称"
               ></div>
             </section>
             <p class="parked-at hidden" id="detailMeta"></p>
             <section class="task-section" data-field="goal">
-              <h3>要达成什么</h3>
-              <div id="goal" class="rich-input" contenteditable="true" data-placeholder="这次工作的最终目标是什么？成功标准是什么？"></div>
+              <h3 data-i18n-field="goal">要达成什么</h3>
+              <div id="goal" class="rich-input" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="progress">
-              <h3>做到哪了</h3>
-              <div id="progress" class="rich-input" contenteditable="true" data-placeholder="已经改了什么、验证过什么、有什么结论"></div>
+              <h3 data-i18n-field="progress">做到哪了</h3>
+              <div id="progress" class="rich-input" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="nextAction">
-              <h3>下一步 · 立刻做</h3>
-              <div id="nextAction" class="rich-input" contenteditable="true" data-placeholder="例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证"></div>
+              <h3 data-i18n-field="nextAction">下一步 · 立刻做</h3>
+              <div id="nextAction" class="rich-input" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="references">
-              <h3>关键引用</h3>
-              <div id="references" class="rich-input refs" contenteditable="true" data-placeholder="/home/zw/src/tools/ResumePad&#10;branch: main"></div>
+              <h3 data-i18n-field="references">关键引用</h3>
+              <div id="references" class="rich-input refs" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="blockers">
-              <h3>卡点 / 未决</h3>
-              <div id="blockers" class="rich-input" contenteditable="true" data-placeholder="卡在哪里？需要谁/input？"></div>
+              <h3 data-i18n-field="blockers">卡点 / 未决</h3>
+              <div id="blockers" class="rich-input" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="notes">
-              <h3>备忘</h3>
-              <div id="notes" class="rich-input" contenteditable="true" data-placeholder="心态、时间限制、别忘的事…"></div>
+              <h3 data-i18n-field="notes">备忘</h3>
+              <div id="notes" class="rich-input" contenteditable="true"></div>
             </section>
             <div class="detail-actions" id="detailViewActions"></div>
             <div class="detail-actions hidden" id="detailEditActions">
-              <button type="submit" id="btnSaveForm">保存</button>
-              <button type="button" id="btnCancelForm">取消</button>
+              <button type="submit" id="btnSaveForm" data-i18n="actions.save">保存</button>
+              <button type="button" id="btnCancelForm" data-i18n="actions.cancel">取消</button>
             </div>
           </form>
         </section>
@@ -772,26 +824,26 @@
     <h3 id="confirmTitle">确认</h3>
     <p id="confirmMessage"></p>
     <div class="actions">
-      <button type="button" id="confirmCancel">取消</button>
-      <button type="button" class="danger" id="confirmOk">确定</button>
+      <button type="button" id="confirmCancel" data-i18n="actions.cancel">取消</button>
+      <button type="button" class="danger" id="confirmOk" data-i18n="actions.confirm">确定</button>
     </div>
   </dialog>
 
   <dialog id="importDialog">
-    <h3>导入数据</h3>
+    <h3 id="importDialogTitle">导入数据</h3>
     <p id="importMessage"></p>
     <div class="actions">
-      <button type="button" id="importCancel">取消</button>
-      <button type="button" id="importMerge">合并到现有</button>
-      <button type="button" class="primary" id="importReplace">覆盖现有</button>
+      <button type="button" id="importCancel" data-i18n="actions.cancel">取消</button>
+      <button type="button" id="importMerge" data-i18n="import.merge">合并到现有</button>
+      <button type="button" class="primary" id="importReplace" data-i18n="import.replace">覆盖现有</button>
     </div>
   </dialog>
 
   <dialog id="settingsDialog" class="settings-dialog">
-    <h3>设置</h3>
-    <div id="settingsSummaryIncludeHost"></div>
+    <h3 data-i18n="settings.title">设置</h3>
+    <div id="settingsPanelHost"></div>
     <div class="actions">
-      <button type="button" id="settingsClose">关闭</button>
+      <button type="button" id="settingsClose" data-i18n="settings.close">关闭</button>
     </div>
   </dialog>
 
@@ -818,21 +870,363 @@
       parkedAt: true,
       completedAt: true,
     };
-    const SUMMARY_INCLUDE_META = [
-      ['goal', '要达成什么'],
-      ['progress', '做到哪了'],
-      ['nextAction', '下一步 · 立刻做'],
-      ['references', '关键引用'],
-      ['blockers', '卡点 / 未决'],
-      ['notes', '备忘'],
-      ['parkedAt', '封存时间'],
-      ['completedAt', '完成时间'],
+
+    const DEFAULT_LOCALE = 'zh';
+    const SUMMARY_INCLUDE_KEYS = [
+      'goal', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'parkedAt', 'completedAt',
     ];
+
+    const I18N = {
+      zh: {
+        pageTitle: 'ResumePad — 任务上下文恢复',
+        metaDescription: '任务切换时的上下文记录小工具',
+        nav: {
+          homeTitle: '首页',
+          themeTitle: '切换主题 (T)',
+          themeDark: '深色',
+          themeLight: '浅色',
+          themeTitleDark: '浅色 (T)',
+          themeTitleLight: '深色 (T)',
+          settings: '设置',
+          settingsTitle: '设置',
+          export: '导出',
+          exportTitle: '导出 JSON',
+          import: '导入',
+          switch: '切换',
+          switchTitle: '切换任务 (N)',
+        },
+        sidebar: {
+          parked: '封存',
+          completed: '完成',
+          emptyParked: '暂无 · 按 {kbd} 切换',
+          emptyHistory: '暂无完成记录',
+          resizerLabel: '拖动调整列表宽度',
+          metaParked: '封存于 {time}',
+          metaDone: '完成于 {time}',
+        },
+        welcome: {
+          title: '选择任务',
+          lead: '在左侧列表点选封存，恢复上次的工作上下文。',
+          hint: '需要切换任务时，点顶部 <strong>切换</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；语言、外观与摘要项在 <strong>设置</strong> 中配置。',
+        },
+        fields: {
+          title: '任务名称',
+          goal: '要达成什么',
+          progress: '做到哪了',
+          nextAction: '下一步 · 立刻做',
+          references: '关键引用',
+          blockers: '卡点 / 未决',
+          notes: '备忘',
+        },
+        placeholders: {
+          title: '例如：修复 ResumePad 导出 bug',
+          goal: '这次工作的最终目标是什么？成功标准是什么？',
+          progress: '已经改了什么、验证过什么、有什么结论',
+          nextAction: '例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证',
+          references: '/home/zw/src/tools/ResumePad\nbranch: main',
+          blockers: '卡在哪里？需要谁/input？',
+          notes: '心态、时间限制、别忘的事…',
+        },
+        badge: { parked: '封存中', done: '已完成' },
+        actions: {
+          edit: '编辑',
+          save: '保存',
+          cancel: '取消',
+          confirm: '确定',
+          agent: 'Agent',
+          summary: '摘要',
+          done: '完成',
+          restore: '恢复',
+          delete: '删除',
+        },
+        settings: {
+          title: '设置',
+          close: '关闭',
+          language: '界面语言',
+          langZh: '中文',
+          langEn: 'English',
+          themeSection: '外观',
+          themeLight: '浅色',
+          themeDark: '深色',
+          themeHint: '快捷键 <kbd>T</kbd> 可在任意页面切换深浅色。',
+          summarySection: '摘要复制',
+          summaryHint: '任务标题始终复制；其余按勾选写入「摘要」剪贴板。设置写入 IndexedDB，并随<strong>导出 JSON</strong>一起备份。',
+        },
+        summaryField: {
+          goal: '要达成什么',
+          progress: '做到哪了',
+          nextAction: '下一步 · 立刻做',
+          references: '关键引用',
+          blockers: '卡点 / 未决',
+          notes: '备忘',
+          parkedAt: '封存时间',
+          completedAt: '完成时间',
+        },
+        import: {
+          title: '导入数据',
+          merge: '合并到现有',
+          replace: '覆盖现有',
+          message: '将导入 {tasks} 条封存、{history} 条历史（共 {total} 条）。请选择：',
+        },
+        confirm: {
+          markDoneTitle: '标记完成',
+          markDoneMsg: '移入「已完成」历史？可随时查看或恢复为封存。',
+          deleteTitle: '永久删除',
+          deleteMsg: '从完成历史中彻底删除？',
+        },
+        time: {
+          justNow: '刚刚',
+          minsAgo: '{n} 分钟前',
+          hrsAgo: '{n} 小时前',
+          daysAgo: '{n} 天前',
+          parkedLine: '封存于 {full}（{rel}）',
+          parkedDoneLine: '封存于 {parkedFull} · 完成于 {doneFull}（{doneRel}）',
+          summaryParked: '封存: {full}',
+          summaryDone: '完成: {full}',
+        },
+        toast: {
+          settingsSaved: '设置已保存',
+          imageInserted: '已插入图片',
+          imageFailed: '图片读取失败',
+          migratedIdb: '已从 localStorage 迁移到 IndexedDB',
+          loadFailed: '读取数据失败，已重置为空',
+          quotaExceeded: '存储空间不足，请导出备份；已完成记录仅保留最近两周',
+          saveFailed: '保存失败：{msg}',
+          copyFailed: '复制失败，请手动选择',
+          needTitle: '请填写任务名称',
+          saved: '已保存',
+          parked: '已封存',
+          copiedAgent: '已复制 Agent 提示词',
+          copiedSummary: '已复制摘要',
+          movedToHistory: '已移入完成历史',
+          restored: '已恢复为封存任务',
+          deletedHistory: '已从历史删除',
+          exported: '已导出 JSON',
+          importOk: '导入成功',
+          importBad: '导入失败：文件格式不对',
+          noIdb: '浏览器不支持 IndexedDB，请升级 Edge/Chrome',
+        },
+        agent: {
+          intro: '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
+          task: '【任务】',
+          goal: '【目标】',
+          progress: '【当前进度】',
+          nextAction: '【下一步 · 请从这里开始】',
+          references: '【关键引用】',
+          blockers: '【卡点 / 未决】',
+          notes: '【备忘】',
+          images: '【图片】字段内嵌 {n} 张（见 ResumePad 界面）',
+          timeParked: '【时间】封存于 {full}',
+          timeDone: '已完成于 {full}',
+          outro: '请先简要确认你理解的目标与下一步，再开始具体改动或建议。',
+        },
+        summary: {
+          goal: '## 目标',
+          progress: '## 进度',
+          nextAction: '## 下一步',
+          references: '## 引用',
+          blockers: '## 卡点',
+          notes: '## 备忘',
+        },
+      },
+      en: {
+        pageTitle: 'ResumePad — Task context recovery',
+        metaDescription: 'Capture context when switching tasks',
+        nav: {
+          homeTitle: 'Home',
+          themeTitle: 'Toggle theme (T)',
+          themeDark: 'Dark',
+          themeLight: 'Light',
+          themeTitleDark: 'Light mode (T)',
+          themeTitleLight: 'Dark mode (T)',
+          settings: 'Settings',
+          settingsTitle: 'Settings',
+          export: 'Export',
+          exportTitle: 'Export JSON',
+          import: 'Import',
+          switch: 'Switch',
+          switchTitle: 'Switch (N)',
+        },
+        sidebar: {
+          parked: 'Parked',
+          completed: 'Done',
+          emptyParked: 'None yet · {kbd} Switch',
+          emptyHistory: 'No completed tasks',
+          resizerLabel: 'Drag to resize list',
+          metaParked: 'Parked {time}',
+          metaDone: 'Done {time}',
+        },
+        welcome: {
+          title: 'Pick a task',
+          lead: 'Select a parked task on the left to restore your last context.',
+          hint: 'To switch tasks, click <strong>Switch</strong> or press <kbd>N</kbd>. Copy an Agent prompt from the task view; set language, appearance, and summary fields in <strong>Settings</strong>.',
+        },
+        fields: {
+          title: 'Task name',
+          goal: 'Goal',
+          progress: 'Progress',
+          nextAction: 'Next · do now',
+          references: 'References',
+          blockers: 'Blockers',
+          notes: 'Notes',
+        },
+        placeholders: {
+          title: 'e.g. Fix ResumePad export bug',
+          goal: 'What should this work achieve? What counts as done?',
+          progress: 'What you already changed, tried, or concluded',
+          nextAction: 'e.g. Add UTF-8 BOM to export in index.html and verify locally',
+          references: '/home/you/src/ResumePad\nbranch: main',
+          blockers: 'Where you are stuck; what you still need',
+          notes: 'Deadlines, reminders, mindset…',
+        },
+        badge: { parked: 'Parked', done: 'Done' },
+        actions: {
+          edit: 'Edit',
+          save: 'Save',
+          cancel: 'Cancel',
+          confirm: 'OK',
+          agent: 'Agent',
+          summary: 'Summary',
+          done: 'Done',
+          restore: 'Restore',
+          delete: 'Delete',
+        },
+        settings: {
+          title: 'Settings',
+          close: 'Close',
+          language: 'Language',
+          langZh: '中文',
+          langEn: 'English',
+          themeSection: 'Appearance',
+          themeLight: 'Light',
+          themeDark: 'Dark',
+          themeHint: 'Press <kbd>T</kbd> anywhere to toggle light/dark.',
+          summarySection: 'Summary clipboard',
+          summaryHint: 'Task title is always copied; checked fields are included in the Summary copy. Saved to IndexedDB and included in <strong>Export JSON</strong>.',
+        },
+        summaryField: {
+          goal: 'Goal',
+          progress: 'Progress',
+          nextAction: 'Next · do now',
+          references: 'References',
+          blockers: 'Blockers',
+          notes: 'Notes',
+          parkedAt: 'Parked at',
+          completedAt: 'Completed at',
+        },
+        import: {
+          title: 'Import data',
+          merge: 'Merge',
+          replace: 'Replace all',
+          message: 'Import {tasks} parked and {history} completed ({total} total). Choose:',
+        },
+        confirm: {
+          markDoneTitle: 'Mark done',
+          markDoneMsg: 'Move to completed history? You can view or restore to parked later.',
+          deleteTitle: 'Delete permanently',
+          deleteMsg: 'Remove from completed history forever?',
+        },
+        time: {
+          justNow: 'just now',
+          minsAgo: '{n} min ago',
+          hrsAgo: '{n} hr ago',
+          daysAgo: '{n} d ago',
+          parkedLine: 'Parked {full} ({rel})',
+          parkedDoneLine: 'Parked {parkedFull} · Done {doneFull} ({doneRel})',
+          summaryParked: 'Parked: {full}',
+          summaryDone: 'Done: {full}',
+        },
+        toast: {
+          settingsSaved: 'Settings saved',
+          imageInserted: 'Image inserted',
+          imageFailed: 'Could not read image',
+          migratedIdb: 'Migrated from localStorage to IndexedDB',
+          loadFailed: 'Could not load data; reset to empty',
+          quotaExceeded: 'Storage full — export a backup; completed tasks kept 14 days',
+          saveFailed: 'Save failed: {msg}',
+          copyFailed: 'Copy failed — select manually',
+          needTitle: 'Enter a task name',
+          saved: 'Saved',
+          parked: 'Parked',
+          copiedAgent: 'Agent prompt copied',
+          copiedSummary: 'Summary copied',
+          movedToHistory: 'Moved to completed',
+          restored: 'Restored to parked',
+          deletedHistory: 'Removed from history',
+          exported: 'JSON exported',
+          importOk: 'Import complete',
+          importBad: 'Import failed: invalid file',
+          noIdb: 'IndexedDB not supported — use Edge or Chrome',
+        },
+        agent: {
+          intro: 'I am resuming a previously interrupted task. Use the context below and prioritize the next step.',
+          task: '[Task]',
+          goal: '[Goal]',
+          progress: '[Progress]',
+          nextAction: '[Next · start here]',
+          references: '[References]',
+          blockers: '[Blockers]',
+          notes: '[Notes]',
+          images: '[Images] {n} inline in fields (see ResumePad UI)',
+          timeParked: '[Time] parked {full}',
+          timeDone: 'Completed {full}',
+          outro: 'Briefly confirm the goal and next step, then proceed.',
+        },
+        summary: {
+          goal: '## Goal',
+          progress: '## Progress',
+          nextAction: '## Next',
+          references: '## References',
+          blockers: '## Blockers',
+          notes: '## Notes',
+        },
+      },
+    };
+
+    let currentLocale = DEFAULT_LOCALE;
+
+    function normalizeLocale(raw) {
+      if (raw === 'en' || raw === 'zh') return raw;
+      if (raw === 'zh-CN' || (typeof raw === 'string' && raw.startsWith('zh'))) return 'zh';
+      if (typeof raw === 'string' && raw.startsWith('en')) return 'en';
+      return DEFAULT_LOCALE;
+    }
+
+    function getLocale() {
+      return currentLocale;
+    }
+
+    function localeTag() {
+      return getLocale() === 'en' ? 'en-US' : 'zh-CN';
+    }
+
+    function t(key) {
+      const parts = key.split('.');
+      let node = I18N[getLocale()];
+      for (const p of parts) {
+        node = node?.[p];
+      }
+      return node ?? key;
+    }
+
+    function tf(key, vars) {
+      let s = t(key);
+      if (vars) {
+        for (const [k, v] of Object.entries(vars)) {
+          s = s.replaceAll(`{${k}}`, String(v));
+        }
+      }
+      return s;
+    }
+
 
     /** 与应用数据一并持久化、导出 JSON */
     const appSettings = {
       summaryInclude: { ...DEFAULT_SUMMARY_INCLUDE },
+      locale: DEFAULT_LOCALE,
     };
+
+    const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
 
     function cloneDefaultSummaryInclude() {
       return { ...DEFAULT_SUMMARY_INCLUDE };
@@ -849,6 +1243,8 @@
 
     function applySettingsFromStored(settingsRoot) {
       appSettings.summaryInclude = normalizeSummaryIncludeSlice(settingsRoot?.summaryInclude);
+      currentLocale = normalizeLocale(settingsRoot?.locale ?? appSettings.locale);
+      appSettings.locale = currentLocale;
     }
 
     function getSummaryInclude() {
@@ -877,10 +1273,10 @@
         if (k in next) next[k] = cb.checked;
       });
       appSettings.summaryInclude = next;
-      syncSummaryIncludeCheckboxUI($('#settingsSummaryIncludeHost'));
+      syncSummaryIncludeCheckboxUI(container);
       try {
         await save();
-        toast('设置已保存');
+        toast(t('toast.settingsSaved'));
       } catch { /* toast 已由 persistData 处理 */ }
     }
 
@@ -896,49 +1292,169 @@
     function bindSummaryIncludePanel(root) {
       if (!root) return;
       root.querySelectorAll('[data-summary-inc]').forEach((cb) => {
+        if (cb.dataset.summaryBound === '1') return;
+        cb.dataset.summaryBound = '1';
         cb.addEventListener('change', () => persistSummaryIncludeFromCheckboxes(root));
+      });
+    }
+
+    function applyFieldLocales() {
+      ['title', ...RICH_FIELDS].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const hint = t(`placeholders.${id}`);
+        if (hint) {
+          el.dataset.placeholder = hint;
+          el.dataset.previewHint = hint;
+        }
+        if (id === 'title') el.setAttribute('aria-label', t('fields.title'));
+      });
+    }
+
+    function applyLocale() {
+      document.documentElement.lang = getLocale() === 'en' ? 'en' : 'zh-CN';
+      document.title = t('pageTitle');
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', t('metaDescription'));
+
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        if (key) el.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key) el.title = t(key);
+      });
+      document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-aria');
+        if (key) el.setAttribute('aria-label', t(key));
+      });
+      document.querySelectorAll('[data-i18n-field]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-field');
+        if (key) el.textContent = t(`fields.${key}`);
+      });
+
+      const welcomeHint = $('#welcomeHint');
+      if (welcomeHint) welcomeHint.innerHTML = t('welcome.hint');
+
+      const emptyList = $('#emptyList');
+      if (emptyList) {
+        emptyList.innerHTML = tf('sidebar.emptyParked', { kbd: '<span class="kbd">N</span>' });
+      }
+      const emptyHistory = $('#emptyHistory');
+      if (emptyHistory) emptyHistory.textContent = t('sidebar.emptyHistory');
+
+      const importTitle = $('#importDialogTitle');
+      if (importTitle) importTitle.textContent = t('import.title');
+
+      applyFieldLocales();
+      syncThemeSettingsUI();
+    }
+
+    async function setLocale(locale) {
+      const next = normalizeLocale(locale);
+      if (next === currentLocale) return;
+      appSettings.locale = next;
+      currentLocale = next;
+      applyLocale();
+      renderSettingsPanel();
+      if (selectedId) {
+        const tsk = findTask(selectedId, selectedFromHistory);
+        if (tsk) {
+          const badge = $('#detailBadge');
+          if (badge && !badge.classList.contains('hidden')) {
+            badge.textContent = selectedFromHistory ? t('badge.done') : t('badge.parked');
+          }
+          const meta = $('#detailMeta');
+          if (meta && !meta.classList.contains('hidden')) {
+            meta.textContent = formatParkedTimeLine(tsk, selectedFromHistory);
+          }
+          bindTaskDetailActions(tsk, selectedFromHistory);
+        }
+      }
+      renderList();
+      try {
+        await save();
+        toast(t('toast.settingsSaved'));
+      } catch { /* persistData toast */ }
+    }
+
+    function buildLanguageSettingsHtml() {
+      const loc = getLocale();
+      return `
+        <section class="settings-section">
+          <h4>${escapeHtml(t('settings.language'))}</h4>
+          <div class="locale-options" role="radiogroup" aria-label="${escapeHtml(t('settings.language'))}">
+            <label><input type="radio" name="app-locale" value="zh" ${loc === 'zh' ? 'checked' : ''} /> ${escapeHtml(t('settings.langZh'))}</label>
+            <label><input type="radio" name="app-locale" value="en" ${loc === 'en' ? 'checked' : ''} /> ${escapeHtml(t('settings.langEn'))}</label>
+          </div>
+        </section>`;
+    }
+
+    function buildThemeSettingsHtml() {
+      const theme = isDarkTheme() ? 'dark' : 'light';
+      return `
+        <section class="settings-section">
+          <h4>${escapeHtml(t('settings.themeSection'))}</h4>
+          <div class="locale-options" role="radiogroup" aria-label="${escapeHtml(t('settings.themeSection'))}">
+            <label><input type="radio" name="app-theme" value="light" ${theme === 'light' ? 'checked' : ''} /> ${escapeHtml(t('settings.themeLight'))}</label>
+            <label><input type="radio" name="app-theme" value="dark" ${theme === 'dark' ? 'checked' : ''} /> ${escapeHtml(t('settings.themeDark'))}</label>
+          </div>
+          <p class="summary-include-hint">${t('settings.themeHint')}</p>
+        </section>`;
+    }
+
+    function bindThemePanel(root) {
+      if (!root) return;
+      root.querySelectorAll('input[name="app-theme"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          if (radio.checked) setTheme(radio.value);
+        });
       });
     }
 
     function buildSummaryIncludeSettingsHtml() {
       const inc = getSummaryInclude();
-      const checks = SUMMARY_INCLUDE_META.map(
-        ([key, label]) => `
+      const checks = SUMMARY_INCLUDE_KEYS.map(
+        (key) => `
         <label>
           <input type="checkbox" data-summary-inc="${key}" ${inc[key] ? 'checked' : ''} />
-          <span>${escapeHtml(label)}</span>
+          <span>${escapeHtml(t(`summaryField.${key}`))}</span>
         </label>`,
       ).join('');
       return `
         <section class="settings-section">
-          <h4>摘要复制</h4>
+          <h4>${escapeHtml(t('settings.summarySection'))}</h4>
           <div class="summary-include-grid">${checks}</div>
-          <p class="summary-include-hint">任务标题始终复制；其余按勾选写入「摘要」剪贴板。设置写入 IndexedDB，并随<strong>导出 JSON</strong>一起备份。</p>
+          <p class="summary-include-hint">${t('settings.summaryHint')}</p>
         </section>`;
     }
 
-    function initSettingsDialog() {
-      const host = $('#settingsSummaryIncludeHost');
+    function renderSettingsPanel() {
+      const host = $('#settingsPanelHost');
       if (!host) return;
-      host.innerHTML = buildSummaryIncludeSettingsHtml();
+      host.innerHTML =
+        buildLanguageSettingsHtml() + buildThemeSettingsHtml() + buildSummaryIncludeSettingsHtml();
+      host.querySelectorAll('input[name="app-locale"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          if (radio.checked) setLocale(radio.value);
+        });
+      });
+      bindThemePanel(host);
       bindSummaryIncludePanel(host);
+    }
+
+    function initSettingsDialog() {
+      const host = $('#settingsPanelHost');
+      if (!host) return;
+      renderSettingsPanel();
       $('#btnSettings').addEventListener('click', () => {
-        syncSummaryIncludeCheckboxUI(host);
+        renderSettingsPanel();
         $('#settingsDialog').showModal();
       });
       $('#settingsClose').addEventListener('click', () => $('#settingsDialog').close());
     }
 
-    const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
-
-    const FIELD_PREVIEW_HINTS = {
-      goal: '这次工作的最终目标是什么？成功标准是什么？',
-      progress: '已经改了什么、验证过什么、有什么结论',
-      nextAction: '例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证',
-      references: '/home/zw/src/tools/ResumePad\nbranch: main',
-      blockers: '卡在哪里？需要谁/input？',
-      notes: '心态、时间限制、别忘的事…',
-    };
     const $ = (sel) => document.querySelector(sel);
 
     let tasks = [];
@@ -1000,6 +1516,7 @@
         history,
         settings: {
           summaryInclude: { ...getSummaryInclude() },
+          locale: getLocale(),
         },
       };
     }
@@ -1140,6 +1657,7 @@
       if (!el) return;
       if (!value) {
         el.innerHTML = '';
+        syncRichFieldEmptyState(el);
         return;
       }
       if (isRichContent(value)) {
@@ -1148,6 +1666,7 @@
         el.textContent = value;
       }
       if (!opts.skipLinkify) scheduleLinkifyRichField(el);
+      syncRichFieldEmptyState(el);
     }
 
     function insertImageAtCursor(field, dataUrl) {
@@ -1179,10 +1698,10 @@
         const dataUrl = await compressImageFile(file);
         insertImageAtCursor(field, dataUrl);
         field.dispatchEvent(new Event('input', { bubbles: true }));
-        toast('已插入图片');
+        toast(t('toast.imageInserted'));
         return true;
       } catch {
-        toast('图片读取失败');
+        toast(t('toast.imageFailed'));
         return false;
       }
     }
@@ -1191,7 +1710,12 @@
       ['title', ...RICH_FIELDS].forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
+        el.spellcheck = false;
+        el.setAttribute('autocorrect', 'off');
+        el.setAttribute('autocomplete', 'off');
+        /* preview hints set in applyFieldLocales */
         bindRichFieldLinkify(el);
+        el.addEventListener('input', () => syncRichFieldEmptyState(el));
         el.addEventListener('paste', async (e) => {
           const items = e.clipboardData?.items;
           if (!items) return;
@@ -1238,7 +1762,7 @@
           await persistData();
         }
         localStorage.removeItem(LEGACY_STORAGE_KEY);
-        toast('已从 localStorage 迁移到 IndexedDB');
+        toast(t('toast.migratedIdb'));
       } catch {
         /* ignore */
       }
@@ -1278,7 +1802,7 @@
         tasks = [];
         history = [];
         applySettingsFromStored(null);
-        toast('读取数据失败，已重置为空');
+        toast(t('toast.loadFailed'));
       }
     }
 
@@ -1290,8 +1814,8 @@
         await idb.set('mirrorBackup', payload);
       } catch (e) {
         const msg = e && e.name === 'QuotaExceededError'
-          ? '存储空间不足，请导出备份；已完成记录仅保留最近两周'
-          : '保存失败：' + (e.message || e);
+          ? t('toast.quotaExceeded')
+          : tf('toast.saveFailed', { msg: e.message || e });
         toast(msg);
         throw e;
       }
@@ -1305,19 +1829,22 @@
       return document.documentElement.dataset.theme === 'dark';
     }
 
-    function updateThemeButton() {
-      const btn = $('#btnTheme');
-      if (!btn) return;
-      btn.textContent = isDarkTheme() ? 'Light' : 'Dark';
-      btn.title = isDarkTheme() ? '浅色 (T)' : '深色 (T)';
+    function syncThemeSettingsUI() {
+      const host = $('#settingsPanelHost');
+      if (!host) return;
+      const theme = isDarkTheme() ? 'dark' : 'light';
+      host.querySelectorAll('input[name="app-theme"]').forEach((radio) => {
+        radio.checked = radio.value === theme;
+      });
     }
 
     function setTheme(theme) {
-      document.documentElement.dataset.theme = theme;
+      const next = theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
       try {
-        localStorage.setItem(THEME_KEY, theme);
+        localStorage.setItem(THEME_KEY, next);
       } catch { /* theme only */ }
-      updateThemeButton();
+      syncThemeSettingsUI();
     }
 
     function toggleTheme() {
@@ -1325,8 +1852,7 @@
     }
 
     function initTheme() {
-      updateThemeButton();
-      $('#btnTheme').addEventListener('click', toggleTheme);
+      /* 主题在设置中切换；快捷键 T 见 document keydown */
     }
 
     const SIDEBAR_WIDTH_KEY = 'resumepad_sidebar_width';
@@ -1429,28 +1955,33 @@
       const d = new Date(iso);
       const diff = Date.now() - d.getTime();
       const mins = Math.floor(diff / 60000);
-      if (mins < 1) return '刚刚';
-      if (mins < 60) return `${mins} 分钟前`;
+      const tag = localeTag();
+      if (mins < 1) return t('time.justNow');
+      if (mins < 60) return tf('time.minsAgo', { n: mins });
       const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `${hrs} 小时前`;
+      if (hrs < 24) return tf('time.hrsAgo', { n: hrs });
       const days = Math.floor(hrs / 24);
-      if (days < 7) return `${days} 天前`;
-      return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      if (days < 7) return tf('time.daysAgo', { n: days });
+      return d.toLocaleString(tag, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     function formatFull(iso) {
-      return new Date(iso).toLocaleString('zh-CN', {
+      return new Date(iso).toLocaleString(localeTag(), {
         year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit',
       });
     }
 
     /** 预览 / 编辑共用，避免切换时时间行文案或换行不一致 */
-    function formatParkedTimeLine(t, fromHistory) {
+    function formatParkedTimeLine(task, fromHistory) {
       if (fromHistory) {
-        return `封存于 ${formatFull(t.parkedAt)} · 完成于 ${formatFull(t.completedAt)}（${formatRelative(t.completedAt)}）`;
+        return tf('time.parkedDoneLine', {
+          parkedFull: formatFull(task.parkedAt),
+          doneFull: formatFull(task.completedAt),
+          doneRel: formatRelative(task.completedAt),
+        });
       }
-      return `封存于 ${formatFull(t.parkedAt)}（${formatRelative(t.parkedAt)}）`;
+      return tf('time.parkedLine', { full: formatFull(task.parkedAt), rel: formatRelative(task.parkedAt) });
     }
 
     function toast(msg) {
@@ -1570,13 +2101,46 @@
       }
     }
 
+    function caretRangeFromPoint(x, y) {
+      if (document.caretRangeFromPoint) {
+        try {
+          return document.caretRangeFromPoint(x, y);
+        } catch {
+          /* ignore */
+        }
+      }
+      const pos = document.caretPositionFromPoint?.(x, y);
+      if (!pos) return null;
+      const range = document.createRange();
+      range.setStart(pos.offsetNode, pos.offset);
+      range.collapse(true);
+      return range;
+    }
+
+    function normalizeCaretRangeForField(fieldId, range) {
+      if (!range || !fieldId) return null;
+      const el = document.getElementById(fieldId);
+      if (!el || !el.contains(range.commonAncestorContainer)) return null;
+      try {
+        return range.cloneRange();
+      } catch {
+        return null;
+      }
+    }
+
+    function restoreDocumentScroll(scrollY, mainScroll) {
+      window.scrollTo(0, scrollY);
+      const mainEl = $('.main');
+      if (mainEl) mainEl.scrollTop = mainScroll;
+    }
+
     function linkifyAllRichFormFields() {
       const snap = captureFocusSnapshot();
       ['title', ...RICH_FIELDS].forEach((id) => {
         const el = document.getElementById(id);
         if (el) linkifyRichElement(el);
       });
-      restoreFocusSnapshot(snap);
+      if (isTaskEditing()) restoreFocusSnapshot(snap);
     }
 
     function linkifyRichElement(el) {
@@ -1655,7 +2219,7 @@
         const hintKey = opts.fieldKey ?? opts.field;
         const hint =
           opts.emptyHint ||
-          (hintKey && FIELD_PREVIEW_HINTS[hintKey]) ||
+          (hintKey && t(`placeholders.${hintKey}`)) ||
           '';
         const hintHtml = hint
           ? `<span class="empty-hint">${escapeHtml(hint)}</span>`
@@ -1680,45 +2244,45 @@
       return n;
     }
 
-    function buildSummary(t) {
+    function buildSummary(task) {
       const inc = getSummaryInclude();
       return [
-        `# ${t.title}`,
+        `# ${task.title}`,
         '',
-        inc.goal && t.goal && `## 目标\n${fieldPlain(t.goal)}`,
-        inc.progress && t.progress && `## 进度\n${fieldPlain(t.progress)}`,
-        inc.nextAction && t.nextAction && `## 下一步\n${fieldPlain(t.nextAction)}`,
-        inc.references && t.references && `## 引用\n${fieldPlain(t.references)}`,
-        inc.blockers && t.blockers && `## 卡点\n${fieldPlain(t.blockers)}`,
-        inc.notes && t.notes && `## 备忘\n${fieldPlain(t.notes)}`,
+        inc.goal && task.goal && `${t('summary.goal')}\n${fieldPlain(task.goal)}`,
+        inc.progress && task.progress && `${t('summary.progress')}\n${fieldPlain(task.progress)}`,
+        inc.nextAction && task.nextAction && `${t('summary.nextAction')}\n${fieldPlain(task.nextAction)}`,
+        inc.references && task.references && `${t('summary.references')}\n${fieldPlain(task.references)}`,
+        inc.blockers && task.blockers && `${t('summary.blockers')}\n${fieldPlain(task.blockers)}`,
+        inc.notes && task.notes && `${t('summary.notes')}\n${fieldPlain(task.notes)}`,
         '',
-        inc.parkedAt && `封存: ${formatFull(t.parkedAt)}`,
-        inc.completedAt && t.completedAt && `完成: ${formatFull(t.completedAt)}`,
+        inc.parkedAt && tf('time.summaryParked', { full: formatFull(task.parkedAt) }),
+        inc.completedAt && task.completedAt && tf('time.summaryDone', { full: formatFull(task.completedAt) }),
       ].filter(Boolean).join('\n');
     }
 
-    function buildAgentPrompt(t) {
+    function buildAgentPrompt(task) {
       const sections = [
-        '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
+        t('agent.intro'),
         '',
-        `【任务】${t.title}`,
+        `${t('agent.task')}${task.title}`,
       ];
-      if (t.goal) sections.push('', '【目标】', fieldPlain(t.goal));
-      if (t.progress) sections.push('', '【当前进度】', fieldPlain(t.progress));
-      if (t.nextAction) sections.push('', '【下一步 · 请从这里开始】', fieldPlain(t.nextAction));
-      if (t.references) sections.push('', '【关键引用】', fieldPlain(t.references));
-      if (t.blockers) sections.push('', '【卡点 / 未决】', fieldPlain(t.blockers));
-      if (t.notes) sections.push('', '【备忘】', fieldPlain(t.notes));
-      const imgCount = countInlineImages(t);
+      if (task.goal) sections.push('', t('agent.goal'), fieldPlain(task.goal));
+      if (task.progress) sections.push('', t('agent.progress'), fieldPlain(task.progress));
+      if (task.nextAction) sections.push('', t('agent.nextAction'), fieldPlain(task.nextAction));
+      if (task.references) sections.push('', t('agent.references'), fieldPlain(task.references));
+      if (task.blockers) sections.push('', t('agent.blockers'), fieldPlain(task.blockers));
+      if (task.notes) sections.push('', t('agent.notes'), fieldPlain(task.notes));
+      const imgCount = countInlineImages(task);
       if (imgCount) {
-        sections.push('', `【图片】字段内嵌 ${imgCount} 张（见 ResumePad 界面）`);
+        sections.push('', tf('agent.images', { n: imgCount }));
       }
       sections.push(
         '',
-        `【时间】封存于 ${formatFull(t.parkedAt)}`,
-        t.completedAt ? `已完成于 ${formatFull(t.completedAt)}` : '',
+        tf('agent.timeParked', { full: formatFull(task.parkedAt) }),
+        task.completedAt ? tf('agent.timeDone', { full: formatFull(task.completedAt) }) : '',
         '',
-        '请先简要确认你理解的目标与下一步，再开始具体改动或建议。',
+        t('agent.outro'),
       );
       return sections.filter((line) => line !== '').join('\n');
     }
@@ -1728,7 +2292,7 @@
         await navigator.clipboard.writeText(text);
         toast(okMsg);
       } catch {
-        toast('复制失败，请手动选择');
+        toast(t('toast.copyFailed'));
       }
     }
 
@@ -1743,7 +2307,7 @@
         const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
         return `<li class="task-item${active}" data-id="${t.id}" data-kind="active">
           <div class="title">${escapeHtml(listPreviewText(t.title))}</div>
-          <div class="meta">封存于 ${formatRelative(t.parkedAt)}</div>
+          <div class="meta">${escapeHtml(tf('sidebar.metaParked', { time: formatRelative(t.parkedAt) }))}</div>
           ${next}
         </li>`;
       }).join('');
@@ -1756,7 +2320,7 @@
         const active = selectedFromHistory && t.id === selectedId ? ' active' : '';
         return `<li class="task-item history-item${active}" data-id="${t.id}" data-kind="history">
           <div class="title">${escapeHtml(t.title)}</div>
-          <div class="meta">完成于 ${formatRelative(t.completedAt)}</div>
+          <div class="meta">${escapeHtml(tf('sidebar.metaDone', { time: formatRelative(t.completedAt) }))}</div>
         </li>`;
       }).join('');
 
@@ -1795,7 +2359,7 @@
       const existingId = $('#taskId').value;
       if (!payload.title) {
         if (!existingId) return { ok: true, skipped: true };
-        if (!silent) toast('请填写任务名称');
+        if (!silent) toast(t('toast.needTitle'));
         return { ok: false };
       }
       const now = new Date().toISOString();
@@ -1822,7 +2386,7 @@
       try {
         await save();
         renderList();
-        if (!silent) toast(existingId ? '已保存' : '已封存');
+        if (!silent) toast(existingId ? t('toast.saved') : t('toast.parked'));
         return { ok: true, id: selectedId };
       } catch {
         return { ok: false };
@@ -1867,24 +2431,25 @@
         : tasks.find((x) => x.id === id);
     }
 
-    function populateTaskDetail(t, fromHistory) {
-      $('#taskId').value = t.id;
+    function populateTaskDetail(task, fromHistory) {
+      $('#taskId').value = task.id;
       const titleEl = $('#title');
-      if (titleEl) titleEl.textContent = t.title || '';
+      if (titleEl) titleEl.textContent = task.title || '';
       const skip = { skipLinkify: true };
-      RICH_FIELDS.forEach((id) => setRichValue(id, t[id] || '', skip));
+      RICH_FIELDS.forEach((id) => setRichValue(id, task[id] || '', skip));
       const badge = $('#detailBadge');
       if (fromHistory) {
-        badge.textContent = '已完成';
+        badge.textContent = t('badge.done');
         badge.className = 'badge done';
       } else {
-        badge.textContent = '封存中';
+        badge.textContent = t('badge.parked');
         badge.className = 'badge';
       }
       badge.classList.remove('hidden');
       const meta = $('#detailMeta');
-      meta.textContent = formatParkedTimeLine(t, fromHistory);
+      meta.textContent = formatParkedTimeLine(task, fromHistory);
       meta.classList.remove('hidden');
+      syncAllRichFieldEmptyStates();
     }
 
     function clearTaskDetailForNew() {
@@ -1895,11 +2460,20 @@
       RICH_FIELDS.forEach((id) => setRichValue(id, '', skip));
       $('#detailBadge').classList.add('hidden');
       $('#detailMeta').classList.add('hidden');
+      syncAllRichFieldEmptyStates();
     }
 
-    function setTaskDetailMode(editing, { fromHistory = false, isNew = false, focusField = null } = {}) {
+    function setTaskDetailMode(editing, {
+      fromHistory = false,
+      isNew = false,
+      focusField = null,
+      caretRange = null,
+    } = {}) {
       const detail = $('#taskDetailView');
       if (!detail) return;
+      const scrollY = window.scrollY;
+      const mainEl = $('.main');
+      const mainScroll = mainEl?.scrollTop ?? 0;
       const canEdit = editing && !fromHistory;
       detail.classList.toggle('is-editing', canEdit);
       detail.classList.toggle('is-history', fromHistory);
@@ -1917,44 +2491,64 @@
         if (el) el.contentEditable = canEdit ? 'true' : 'false';
       });
       if (!canEdit) linkifyAllRichFormFields();
-      if (focusField) requestAnimationFrame(() => focusFormField(focusField));
-      else if (canEdit && isNew) requestAnimationFrame(() => focusFormField('title'));
+      syncAllRichFieldEmptyStates();
+
+      const shouldFocus = focusField || (canEdit && isNew);
+      if (!shouldFocus) return;
+
+      const field = focusField || 'title';
+      const focusOpts = {
+        caretRange: normalizeCaretRangeForField(field, caretRange),
+        collapse: isNew && !caretRange ? 'end' : 'preserve',
+      };
+
+      const applyFocus = () => {
+        restoreDocumentScroll(scrollY, mainScroll);
+        focusFormField(field, focusOpts);
+        restoreDocumentScroll(scrollY, mainScroll);
+      };
+
+      if (canEdit && caretRange) {
+        applyFocus();
+        return;
+      }
+      requestAnimationFrame(applyFocus);
     }
 
-    function bindTaskDetailActions(t, fromHistory) {
+    function bindTaskDetailActions(task, fromHistory) {
       const host = $('#detailViewActions');
-      if (!host || !t) return;
+      if (!host || !task) return;
       if (fromHistory) {
         host.innerHTML = `
-        <button type="button" id="btnCopyAgent">Agent</button>
-        <button type="button" id="btnCopyResume">摘要</button>
-        <button type="button" id="btnRestoreResume">恢复</button>
-        <button type="button" class="danger" id="btnDeleteHistory">删除</button>
+        <button type="button" id="btnCopyAgent">${escapeHtml(t('actions.agent'))}</button>
+        <button type="button" id="btnCopyResume">${escapeHtml(t('actions.summary'))}</button>
+        <button type="button" id="btnRestoreResume">${escapeHtml(t('actions.restore'))}</button>
+        <button type="button" class="danger" id="btnDeleteHistory">${escapeHtml(t('actions.delete'))}</button>
       `;
-        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
-        $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
-        $('#btnRestoreResume').onclick = () => restoreFromHistory(t.id);
-        $('#btnDeleteHistory').onclick = () => deleteFromHistory(t.id);
+        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(task), t('toast.copiedAgent'));
+        $('#btnCopyResume').onclick = () => copyText(buildSummary(task), t('toast.copiedSummary'));
+        $('#btnRestoreResume').onclick = () => restoreFromHistory(task.id);
+        $('#btnDeleteHistory').onclick = () => deleteFromHistory(task.id);
       } else {
         host.innerHTML = `
-        <button type="button" id="btnEditResume">编辑</button>
-        <button type="button" id="btnCopyAgent">Agent</button>
-        <button type="button" id="btnCopyResume">摘要</button>
-        <button type="button" id="btnDoneResume">完成</button>
+        <button type="button" id="btnEditResume">${escapeHtml(t('actions.edit'))}</button>
+        <button type="button" id="btnCopyAgent">${escapeHtml(t('actions.agent'))}</button>
+        <button type="button" id="btnCopyResume">${escapeHtml(t('actions.summary'))}</button>
+        <button type="button" id="btnDoneResume">${escapeHtml(t('actions.done'))}</button>
       `;
         $('#btnEditResume').onclick = () => enterTaskEdit();
-        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(t), '已复制 Agent 提示词');
-        $('#btnCopyResume').onclick = () => copyText(buildSummary(t), '已复制摘要');
-        $('#btnDoneResume').onclick = () => markDone(t.id);
+        $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(task), t('toast.copiedAgent'));
+        $('#btnCopyResume').onclick = () => copyText(buildSummary(task), t('toast.copiedSummary'));
+        $('#btnDoneResume').onclick = () => markDone(task.id);
       }
     }
 
-    function enterTaskEdit(focusFieldId = null) {
+    function enterTaskEdit(focusFieldId = null, { caretRange = null } = {}) {
       if (!selectedId || selectedFromHistory) return;
       const t = findTask(selectedId, false);
       if (!t) return;
       editingId = selectedId;
-      setTaskDetailMode(true, { focusField: focusFieldId });
+      setTaskDetailMode(true, { focusField: focusFieldId, caretRange });
       bindTaskDetailActions(t, false);
     }
 
@@ -2028,24 +2622,62 @@
       selectActiveResume(selectedId);
     }
 
-    function focusFormField(fieldId) {
+    function isRichFieldEmpty(el) {
+      if (!el) return true;
+      const text = (el.textContent || '').replace(/\u200b/g, '').trim();
+      return !text && !el.querySelector('img');
+    }
+
+    function syncRichFieldEmptyState(el) {
+      if (!el) return;
+      el.classList.toggle('is-field-empty', isRichFieldEmpty(el));
+    }
+
+    function syncAllRichFieldEmptyStates() {
+      ['title', ...RICH_FIELDS].forEach((id) => {
+        syncRichFieldEmptyState(document.getElementById(id));
+      });
+    }
+
+    function focusFormField(fieldId, { caretRange = null, collapse = 'preserve' } = {}) {
       const el = fieldId ? document.getElementById(fieldId) : null;
       if (!el) return;
       el.focus({ preventScroll: true });
       if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-        const len = el.value.length;
-        el.setSelectionRange(len, len);
+        if (collapse === 'end') {
+          const len = el.value.length;
+          el.setSelectionRange(len, len);
+        }
         return;
       }
       if (!el.classList?.contains('rich-input')) return;
+      const sel = window.getSelection();
+      if (!sel) return;
+      if (caretRange) {
+        try {
+          sel.removeAllRanges();
+          sel.addRange(caretRange);
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
+      if (collapse === 'preserve') {
+        if (isRichFieldEmpty(el)) {
+          const range = document.createRange();
+          range.setStart(el, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        return;
+      }
       const range = document.createRange();
       range.selectNodeContents(el);
-      const hasContent =
-        (el.textContent || '').trim().length > 0 || !!el.querySelector('img');
-      range.collapse(hasContent ? false : true);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
+      const hasContent = !isRichFieldEmpty(el);
+      range.collapse(collapse === 'end' && hasContent ? false : true);
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
 
     function openForm(id = null, focusFieldId = null) {
@@ -2073,7 +2705,8 @@
         const block = e.target.closest('[data-field]');
         if (!block) return;
         e.preventDefault();
-        enterTaskEdit(block.dataset.field);
+        const caretRange = caretRangeFromPoint(e.clientX, e.clientY);
+        enterTaskEdit(block.dataset.field, { caretRange });
       });
     }
 
@@ -2082,40 +2715,40 @@
         const result = await saveCurrentForm({ silent: true });
         if (!result.ok) return;
       }
-      const ok = await confirmDialog('标记完成', '移入「已完成」历史？可随时查看或恢复为封存。');
+      const ok = await confirmDialog(t('confirm.markDoneTitle'), t('confirm.markDoneMsg'));
       if (!ok) return;
       const idx = tasks.findIndex((x) => x.id === id);
       if (idx < 0) return;
-      const t = tasks[idx];
+      const task = tasks[idx];
       const now = new Date().toISOString();
-      history.unshift({ ...t, completedAt: now, updatedAt: now });
+      history.unshift({ ...task, completedAt: now, updatedAt: now });
       tasks.splice(idx, 1);
       await save();
       selectedFromHistory = true;
-      selectedId = t.id;
+      selectedId = task.id;
       renderList();
-      selectHistoryTask(t.id);
-      toast('已移入完成历史');
+      selectHistoryTask(task.id);
+      toast(t('toast.movedToHistory'));
     }
 
     async function restoreFromHistory(id) {
       const idx = history.findIndex((x) => x.id === id);
       if (idx < 0) return;
-      const t = history[idx];
+      const task = history[idx];
       const now = new Date().toISOString();
-      const { completedAt, ...rest } = t;
+      const { completedAt, ...rest } = task;
       tasks.push({ ...rest, parkedAt: now, updatedAt: now });
       history.splice(idx, 1);
       await save();
       selectedFromHistory = false;
-      selectedId = t.id;
+      selectedId = task.id;
       renderList();
-      selectActiveResume(t.id);
-      toast('已恢复为封存任务');
+      selectActiveResume(task.id);
+      toast(t('toast.restored'));
     }
 
     async function deleteFromHistory(id) {
-      const ok = await confirmDialog('永久删除', '从完成历史中彻底删除？');
+      const ok = await confirmDialog(t('confirm.deleteTitle'), t('confirm.deleteMsg'));
       if (!ok) return;
       history = history.filter((x) => x.id !== id);
       await save();
@@ -2124,7 +2757,7 @@
         showView('welcome');
       }
       renderList();
-      toast('已从历史删除');
+      toast(t('toast.deletedHistory'));
     }
 
     function mergeImported(data) {
@@ -2158,6 +2791,7 @@
       } else {
         applySettingsFromStored(null);
       }
+      applyLocale();
     }
 
     function parseImportFile(parsed) {
@@ -2179,8 +2813,11 @@
       return new Promise((resolve) => {
         pendingImport = data;
         const total = (data.tasks?.length || 0) + (data.history?.length || 0);
-        $('#importMessage').textContent =
-          `将导入 ${data.tasks?.length || 0} 条封存、${data.history?.length || 0} 条历史（共 ${total} 条）。请选择：`;
+        $('#importMessage').textContent = tf('import.message', {
+          tasks: data.tasks?.length || 0,
+          history: data.history?.length || 0,
+          total,
+        });
         const dlg = $('#importDialog');
         const cleanup = (result) => {
           dlg.close();
@@ -2274,7 +2911,7 @@
       a.download = `resumepad-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
-      toast('已导出 JSON');
+      toast(t('toast.exported'));
     };
 
     $('#btnImport').onclick = () => $('#importFile').click();
@@ -2286,14 +2923,21 @@
         const data = parseImportFile(JSON.parse(await file.text()));
         const action = await showImportDialog(data);
         if (!action) return;
-        if (action === 'merge') mergeImported(data);
-        else replaceImported(data);
+        if (action === 'merge') {
+          mergeImported(data);
+          if (data.settings) {
+            applySettingsFromStored(data.settings);
+            applyLocale();
+          }
+        } else {
+          replaceImported(data);
+        }
         await save();
         renderList();
         showView('welcome');
-        toast('导入成功');
+        toast(t('toast.importOk'));
       } catch {
-        toast('导入失败：文件格式不对');
+        toast(t('toast.importBad'));
       }
       e.target.value = '';
     });
@@ -2322,11 +2966,12 @@
       initRichFields();
       initTaskDetailDblClick();
       if (!window.indexedDB) {
-        toast('浏览器不支持 IndexedDB，请升级 Edge/Chrome');
+        toast(t('toast.noIdb'));
         return;
       }
       await migrateFromLocalStorage();
       await load();
+      applyLocale();
       initSettingsDialog();
       const historyBefore = history.length;
       pruneHistory();

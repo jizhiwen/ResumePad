@@ -42,13 +42,13 @@ Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录
 | **封存** | 进行中的任务，按封存时间排序；列表预览支持多行换行，富文本会转为纯文本显示；拖动列表与正文之间的分隔条可调整宽度（会记住） |
 | **完成** | 已标记完成的任务（默认保留约 14 天） |
 | **Switch** | 新建封存或切换编辑当前任务 |
-| **设置** | 配置「摘要」复制时包含哪些字段（随 JSON 导出/导入） |
+| **设置** | 界面语言（中文 / English）、外观（浅色/深色）、配置「摘要」复制字段（语言与摘要随 JSON 导出/导入；主题存于本机） |
 | **编辑** | 预览页底部进入编辑（与双击区块等效） |
 | **Agent** | 一键复制面向 AI 助手的恢复提示词 |
 | **摘要** | 按设置复制 Markdown 格式的任务摘要 |
 | **完成** | 将当前封存移入完成历史 |
 | **导出 / 导入** | JSON 备份与恢复（支持合并或覆盖） |
-| **Light / Dark** | 主题切换（快捷键 `T`） |
+| **设置 · 外观** | 浅色 / 深色主题（快捷键 `T` 仍可切换） |
 
 每条封存包含这些字段，便于「回来先读什么、立刻做什么」：
 
@@ -83,7 +83,7 @@ Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录
 
 - 数据保存在浏览器 **IndexedDB**（`resumepad_db`），仅本机、仅当前浏览器配置，不会上传到任何服务器。
 - 建议定期使用 **导出** 做 JSON 备份；换机或清缓存前务必先导出。
-- 导出 JSON 包含 `version`、`tasks`、`history`、`settings`（摘要复制选项等）。
+- 导出 JSON 包含 `version`、`tasks`、`history`、`settings`（`locale`、`summaryInclude` 等）。
 - 若曾使用旧版 localStorage，首次打开会自动迁移到 IndexedDB。
 - Windows 快捷方式：`%LOCALAPPDATA%\ResumePad\EdgeProfile`；Linux 启动器：`~/.config/ResumePad/edge-profile`。与直接双击 `index.html` 的 Edge **不共用**数据。
 
