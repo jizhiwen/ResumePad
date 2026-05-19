@@ -36,17 +36,17 @@
 
 | 平台 | 路径 |
 |------|------|
-| Linux | `~/.config/ResumePad/` |
-| Windows | `%APPDATA%\ResumePad\` |
+| Linux | `~/.config/resumepad/` |
+| Windows | `%APPDATA%\resumepad\` |
 
-**何时创建：** 首次启动 Electron 版时自动创建；整个目录作为 Chromium 用户配置根。
+**何时创建：** 首次启动 Electron 版时自动创建。路径为 Electron 标准的 `app.getPath('userData')`（与 `package.json` 的 `name` 字段一致，见 `resumepad`），整个目录作为 Chromium 用户配置根。
 
 ```
-~/.config/ResumePad/
-├── window-bounds.json      # 窗口大小与位置
+~/.config/resumepad/          # Linux
+├── window-bounds.json
 ├── Default/
-│   ├── IndexedDB/          # 任务数据 resumepad_db
-│   └── Local Storage/      # 主题、侧栏宽度等
+│   ├── IndexedDB/          # 任务 resumepad_db
+│   └── Local Storage/
 ├── Cache/
 └── …
 ```
@@ -62,7 +62,7 @@
 ```bash
 rm -f ~/.local/bin/resumepad ~/.local/share/applications/resumepad.desktop
 rm -rf ~/.local/opt/resumepad
-rm -rf ~/.config/ResumePad/app-root ~/.config/ResumePad/edge-profile
+rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 ```
 
 然后从 [Releases](https://github.com/jizhiwen/ResumePad/releases) 安装 AppImage 或 `.deb` 启动。

@@ -2,9 +2,6 @@ const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
-// Linux 默认用 package.json 的 name「resumepad」作配置目录，改为与文档一致的 ResumePad
-app.setName('ResumePad');
-
 const MIN_W = 640;
 const MIN_H = 400;
 const DEFAULT = { w: 960, h: 500, x: 80, y: 50 };
