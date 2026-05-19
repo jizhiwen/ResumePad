@@ -31,8 +31,7 @@
       "index.html",
       "icons/**/*",
       "manifest.webmanifest",
-      "!icons/generate-png.sh",
-      "!icons/install-icons.sh"
+      "!icons/generate-png.sh"
     ],
     "directories": {
       "output": "dist",
