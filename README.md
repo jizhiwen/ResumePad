@@ -39,20 +39,61 @@
 | Linux | `~/.config/ResumePad/` |
 | Windows | `%APPDATA%\ResumePad\` |
 
-**何时创建：** 安装后**首次启动** ResumePad（Electron）时，系统会自动创建该目录及 Chromium 配置子目录；无需手动新建。
+同一配置根目录，但 **Electron 版** 与 **已废弃的 Edge 脚本安装** 看到的子目录不同（不要混为一谈）。
 
-**目录内容（常见）：**
+#### Electron 版（当前 Releases 安装包）
+
+**何时创建：** 首次启动 **Electron 版** ResumePad 时自动创建；Chromium 把**整个** `~/.config/ResumePad/` 当作用户配置目录（不再使用下面的 `edge-profile/`）。
+
+**目录大致如下：**
+
+```
+~/.config/ResumePad/
+├── window-bounds.json      # 主进程写入（见下表）
+├── Default/
+│   ├── IndexedDB/          # 任务数据 resumepad_db
+│   └── Local Storage/      # 主题、侧栏宽度等
+├── Cache/
+└── …                       # 其它 Chromium 缓存（一般勿手改）
+```
 
 | 路径 / 文件 | 何时写入 | 说明 |
 |-------------|----------|------|
-| `IndexedDB/` | 首次启动后，有任务/设置操作时 | 封存任务、完成历史、语言与摘要设置等（库名 `resumepad_db`） |
-| `Local Storage/` | 首次启动后 | 主题（`resumepad_theme`）、侧栏宽度（`resumepad_sidebar_width`）等 |
-| `window-bounds.json` | 首次**调整大小、移动或关闭**窗口时 | 窗口宽高与位置；主进程写入，启动时读取 |
-| `Preferences`、`Cache/` 等 | 首次启动时 | Electron / Chromium 内部配置与缓存，一般无需手动修改 |
+| `Default/IndexedDB/` | 首次有任务/设置读写后 | 封存、完成历史、语言与摘要设置 |
+| `Default/Local Storage/` | 首次启动后 | `resumepad_theme`、`resumepad_sidebar_width` 等 |
+| `window-bounds.json` | 首次调整大小、移动或关闭窗口 | 仅 Electron **主进程**读写 |
+| `Cache/`、`Preferences` 等 | 首次启动 | Chromium 内部文件 |
 
-卸载应用**不会**自动删除此目录；若要清空本机数据，可退出应用后手动删除整个 `ResumePad` 文件夹（删除前请先 **导出** JSON）。
+#### 旧版 Edge 安装（已废弃，你当前的 `ll` 即此类）
 
-> 若曾使用旧版 Edge 安装脚本，同一目录下可能仍有 `edge-profile/`、`app-root` 等遗留项；当前 Electron 版不再使用它们，可自行删除。
+若曾运行 `./install-desktop-entry.sh` 并用 **Edge** 启动，目录往往只有几项，例如：
+
+```
+~/.config/ResumePad/
+├── app-root -> ~/.local/opt/resumepad/app/   # 安装时创建的符号链接
+├── edge-profile/                           # Edge 独立配置（IndexedDB 在其内）
+└── window-bounds.json
+```
+
+| 路径 | 何时创建 | 说明 |
+|------|----------|------|
+| `app-root` | 运行安装脚本 / `init-config.sh` 时 | 指向已安装的应用文件，**Electron 不用** |
+| `edge-profile/` | 首次用 Edge 版 `resumepad` 启动时 | 任务数据在 `edge-profile/Default/IndexedDB/`，与 Electron 的 `Default/IndexedDB/` **不是同一路径** |
+| `window-bounds.json` | 首次移动/缩放/关闭窗口 | Edge 启动脚本或 Electron 主进程都会写；格式相同 |
+
+`window-bounds.json` 示例（约 30 字节，一行 JSON）：
+
+```json
+{"w":960,"h":500,"x":80,"y":50}
+```
+
+#### 从 Edge 版迁到 Electron 版
+
+1. 在**旧版**里 **导出** JSON 备份（数据在 `edge-profile/` 内）。
+2. 安装并打开 **Electron** 版，**导入** 该 JSON。
+3. 确认 Electron 已生成 `Default/IndexedDB/` 后，可删除遗留的 `edge-profile/`、`app-root`（先备份整个 `ResumePad` 目录更稳妥）。
+
+卸载应用**不会**自动删除 `~/.config/ResumePad/`；清空本机数据需手动删除该文件夹（删除前务必先导出）。
 
 ## 界面说明
 
