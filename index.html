@@ -1,9 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="notranslate" translate="no">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="任务切换时的上下文记录小工具" />
+  <meta name="google" content="notranslate" />
+  <link rel="icon" href="icons/icon-48.png" type="image/png" sizes="48x48" />
+  <link rel="icon" href="icons/icon-128.png" type="image/png" sizes="128x128" />
+  <link rel="icon" href="icons/icon-512.png" type="image/png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="icons/icon-128.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <title>ResumePad — 任务上下文恢复</title>
   <script>
@@ -12,8 +18,15 @@
       var t = localStorage.getItem(k);
       var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      var bg = dark ? '#0a0a0a' : '#fafafa';
+      var fg = dark ? '#fafafa' : '#171717';
+      document.documentElement.style.background = bg;
+      document.documentElement.style.color = fg;
       if (/[?&]standalone(?:=1)?(?:&|$)/.test(location.search)) {
         document.documentElement.dataset.standalone = '1';
+        setTimeout(function () {
+          document.documentElement.dataset.appReady = '1';
+        }, 3000);
       }
       var sw = parseInt(localStorage.getItem('resumepad_sidebar_width'), 10);
       if (sw >= 160 && sw <= 480) {
@@ -25,22 +38,7 @@
     (function () {
       if (document.documentElement.dataset.standalone !== '1') return;
       var KEY = 'resumepad_window_bounds';
-      var defaults = { w: 960, h: 500, x: 80, y: 50 };
-      function read() {
-        try {
-          var s = JSON.parse(localStorage.getItem(KEY) || 'null');
-          if (s && s.w > 200 && s.h > 200) return s;
-        } catch (e) {}
-        return null;
-      }
-      function apply() {
-        var s = read() || defaults;
-        try {
-          if (typeof s.x === 'number' && typeof s.y === 'number') window.moveTo(s.x, s.y);
-          window.resizeTo(s.w, s.h);
-        } catch (e) {}
-      }
-      function save() {
+      function saveWindowBounds() {
         try {
           localStorage.setItem(KEY, JSON.stringify({
             w: window.outerWidth,
@@ -48,19 +46,17 @@
             x: window.screenX,
             y: window.screenY
           }));
-        } catch (e) {}
+        } catch (e) { /* standalone layout */ }
       }
-      function scheduleApply() {
-        apply();
-        setTimeout(apply, 120);
-        setTimeout(apply, 450);
-        setTimeout(apply, 900);
-      }
-      window.addEventListener('DOMContentLoaded', scheduleApply);
-      window.addEventListener('pagehide', save);
-      window.addEventListener('beforeunload', save);
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(saveWindowBounds, 400);
+      });
+      window.addEventListener('pagehide', saveWindowBounds);
+      window.addEventListener('beforeunload', saveWindowBounds);
       document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'hidden') save();
+        if (document.visibilityState === 'hidden') saveWindowBounds();
       });
     })();
   </script>
@@ -119,7 +115,11 @@
       flex-direction: column;
     }
 
-    /* launch-app（?standalone=1）：铺满 960px 宽窗口，无四周灰边 */
+    /* launch-app（?standalone=1）：铺满窗口；启动完成前隐藏内容避免闪屏 */
+    html[data-standalone="1"]:not([data-app-ready="1"]) .app {
+      visibility: hidden;
+    }
+
     html[data-standalone="1"],
     html[data-standalone="1"] body {
       margin: 0;
@@ -475,6 +475,22 @@
       background: transparent;
     }
 
+    .task-detail .rich-input.is-field-empty,
+    .task-detail #title.task-title.is-field-empty {
+      position: relative;
+    }
+
+    .task-detail .rich-input.is-field-empty::before,
+    .task-detail #title.task-title.is-field-empty::before {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      pointer-events: none;
+    }
+
     .task-detail:not(.is-editing) .rich-input.is-field-empty::before,
     .task-detail:not(.is-editing) #title.task-title.is-field-empty::before {
       content: attr(data-preview-hint);
@@ -492,7 +508,7 @@
     .task-detail.is-editing #title.task-title.is-field-empty::before {
       content: attr(data-placeholder);
       color: var(--muted);
-      opacity: 0.6;
+      opacity: 0.55;
     }
 
     .task-detail.is-editing #title.task-title:focus,
@@ -626,10 +642,6 @@
 
     .task-section-title { position: relative; }
 
-    .task-detail .rich-input.is-field-empty::before,
-    .task-detail #title.task-title.is-field-empty::before {
-      pointer-events: none;
-    }
 
     .rich-input img {
       max-width: 100%;
@@ -919,13 +931,13 @@
           notes: '备忘',
         },
         placeholders: {
-          title: '例如：修复 ResumePad 导出 bug',
-          goal: '这次工作的最终目标是什么？成功标准是什么？',
-          progress: '已经改了什么、验证过什么、有什么结论',
-          nextAction: '例如：在 index.html 里给 export 加 UTF-8 BOM，然后本地打开验证',
-          references: '/home/zw/src/tools/ResumePad\nbranch: main',
-          blockers: '卡在哪里？需要谁/input？',
-          notes: '心态、时间限制、别忘的事…',
+          title: '任务名称，如：修复导出编码',
+          goal: '完成后应看到什么结果',
+          progress: '已做事项、验证与结论',
+          nextAction: '回来后的第一个动作',
+          references: '路径、分支、链接或命令',
+          blockers: '阻塞或待确认项',
+          notes: '时限、风险、备忘',
         },
         badge: { parked: '封存中', done: '已完成' },
         actions: {
@@ -1071,13 +1083,13 @@
           notes: 'Notes',
         },
         placeholders: {
-          title: 'e.g. Fix ResumePad export bug',
-          goal: 'What should this work achieve? What counts as done?',
-          progress: 'What you already changed, tried, or concluded',
-          nextAction: 'e.g. Add UTF-8 BOM to export in index.html and verify locally',
-          references: '/home/you/src/ResumePad\nbranch: main',
-          blockers: 'Where you are stuck; what you still need',
-          notes: 'Deadlines, reminders, mindset…',
+          title: 'Task name, e.g. Fix export encoding',
+          goal: 'What done looks like',
+          progress: 'Done so far and conclusions',
+          nextAction: 'First action when you resume',
+          references: 'Paths, branches, links, commands',
+          blockers: 'Blockers or open questions',
+          notes: 'Deadlines, risks, notes',
         },
         badge: { parked: 'Parked', done: 'Done' },
         actions: {
@@ -1715,7 +1727,17 @@
         el.setAttribute('autocomplete', 'off');
         /* preview hints set in applyFieldLocales */
         bindRichFieldLinkify(el);
-        el.addEventListener('input', () => syncRichFieldEmptyState(el));
+        el.addEventListener('input', () => {
+          const wasEmpty = el.classList.contains('is-field-empty');
+          syncRichFieldEmptyState(el);
+          if (!wasEmpty && el.classList.contains('is-field-empty') && document.activeElement === el) {
+            placeCaretInEmptyRich(el);
+          }
+        });
+        el.addEventListener('focus', () => {
+          if (!$('#taskDetailView')?.classList.contains('is-editing')) return;
+          if (isRichFieldEmpty(el)) placeCaretInEmptyRich(el);
+        });
         el.addEventListener('paste', async (e) => {
           const items = e.clipboardData?.items;
           if (!items) return;
@@ -1849,10 +1871,6 @@
 
     function toggleTheme() {
       setTheme(isDarkTheme() ? 'light' : 'dark');
-    }
-
-    function initTheme() {
-      /* 主题在设置中切换；快捷键 T 见 document keydown */
     }
 
     const SIDEBAR_WIDTH_KEY = 'resumepad_sidebar_width';
@@ -2120,7 +2138,7 @@
     function normalizeCaretRangeForField(fieldId, range) {
       if (!range || !fieldId) return null;
       const el = document.getElementById(fieldId);
-      if (!el || !el.contains(range.commonAncestorContainer)) return null;
+      if (!el || isRichFieldEmpty(el) || !el.contains(range.commonAncestorContainer)) return null;
       try {
         return range.cloneRange();
       } catch {
@@ -2628,6 +2646,26 @@
       return !text && !el.querySelector('img');
     }
 
+    function normalizeEmptyRichForCaret(el) {
+      if (!el || !isRichFieldEmpty(el)) return;
+      el.innerHTML = '';
+    }
+
+    function placeCaretInEmptyRich(el) {
+      if (!el) return;
+      normalizeEmptyRichForCaret(el);
+      const sel = window.getSelection();
+      if (!sel) return;
+      if (!el.firstChild || el.firstChild.nodeType !== Node.TEXT_NODE) {
+        el.appendChild(document.createTextNode(''));
+      }
+      const range = document.createRange();
+      range.setStart(el.firstChild, 0);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
     function syncRichFieldEmptyState(el) {
       if (!el) return;
       el.classList.toggle('is-field-empty', isRichFieldEmpty(el));
@@ -2651,6 +2689,10 @@
         return;
       }
       if (!el.classList?.contains('rich-input')) return;
+      if (isRichFieldEmpty(el)) {
+        placeCaretInEmptyRich(el);
+        return;
+      }
       const sel = window.getSelection();
       if (!sel) return;
       if (caretRange) {
@@ -2662,20 +2704,10 @@
           /* fall through */
         }
       }
-      if (collapse === 'preserve') {
-        if (isRichFieldEmpty(el)) {
-          const range = document.createRange();
-          range.setStart(el, 0);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-        return;
-      }
+      if (collapse === 'preserve') return;
       const range = document.createRange();
       range.selectNodeContents(el);
-      const hasContent = !isRichFieldEmpty(el);
-      range.collapse(collapse === 'end' && hasContent ? false : true);
+      range.collapse(collapse === 'end' ? false : true);
       sel.removeAllRanges();
       sel.addRange(range);
     }
@@ -2705,8 +2737,12 @@
         const block = e.target.closest('[data-field]');
         if (!block) return;
         e.preventDefault();
-        const caretRange = caretRangeFromPoint(e.clientX, e.clientY);
-        enterTaskEdit(block.dataset.field, { caretRange });
+        const fieldId = block.dataset.field;
+        const fieldEl = document.getElementById(fieldId);
+        const caretRange = fieldEl && !isRichFieldEmpty(fieldEl)
+          ? caretRangeFromPoint(e.clientX, e.clientY)
+          : null;
+        enterTaskEdit(fieldId, { caretRange });
       });
     }
 
@@ -2961,7 +2997,7 @@
     });
 
     async function boot() {
-      initTheme();
+      try {
       initSidebarResize();
       initRichFields();
       initTaskDetailDblClick();
@@ -2978,6 +3014,9 @@
       if (history.length < historyBefore) await persistData();
       renderList();
       showView('welcome');
+      } finally {
+        document.documentElement.dataset.appReady = '1';
+      }
     }
 
     boot();

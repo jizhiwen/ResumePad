@@ -29,11 +29,15 @@
 - **Linux**：应用菜单搜索 **ResumePad** → 固定到 Dock；通过该图标启动。
 - **Windows**：桌面或开始菜单 **ResumePad** 快捷方式；使用独立 Edge 配置目录（`%LOCALAPPDATA%\ResumePad\EdgeProfile`），任务栏与 Edge 分开。**请始终用快捷方式启动**，数据只在该配置中。
 
-Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录与 `--class=ResumePad`；Wayland 下默认用 X11 模式以便 Dock 正确分组。
+Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录与 `--class=resumepad`；Wayland 下默认用 X11 模式以便 Dock 正确分组。
 
-**窗口大小**：通过启动器 / 快捷方式打开（`?standalone=1`）时，页面会记住上次关闭时的窗口大小（默认约 **960×500**），保存在该 Edge 配置的 `localStorage` 中。
+**窗口大小**：关闭时写入 `~/.config/ResumePad/window-bounds.json`（并同步 Edge 配置）；下次启动优先读该文件，用 `--window-size` / `--position` 一次打开，避免闪烁。删除整个 `~/.config/ResumePad/` 后需重新用启动器打开并关闭一次以生成记录。仅近全屏时重置为默认 960×500。
 
-**若仍与 Edge 图标合并：** 取消 Dock 旧固定 → 重新 `./install-desktop-entry.sh` → 只从应用菜单 **ResumePad** 启动并再固定。必要时用 `xprop WM_CLASS` 查看窗口类名，并改 `~/.local/share/applications/resumepad.desktop` 中的 `StartupWMClass=`。
+**Dock 图标（重要）：** Chromium/Edge 在 `--app` 模式下，**运行中** Dock 使用网页 **PNG favicon**（`icons/icon-128.png`），未启动时菜单/Dock 固定项使用 `Icon=resumepad`。
+
+1. 执行 `./install-desktop-entry.sh`（安装图标与桌面项；`StartupWMClass=resumepad`，与启动参数 `--class` 一致）。
+2. 取消 Dock 旧固定，从应用菜单 **ResumePad** 启动并重新固定（勿从 Edge 图标启动）。
+3. 若 Dock 仍与 Edge 合并：执行 `xprop WM_CLASS` 查看类名，必要时设置 `RESUMEPAD_WM_CLASS=…` 后重装。
 
 ## 界面说明
 
@@ -99,7 +103,9 @@ ResumePad/
 ├── uninstall-desktop-entry.bat     # Windows 卸载
 ├── install-windows-shortcut.ps1    # Windows 安装（由 .bat 调用）
 ├── uninstall-windows-shortcut.ps1  # Windows 卸载（由 .bat 调用）
-├── icons/                          # 图标（favicon / Dock / 快捷方式）
+├── icons/                          # 图标（PNG favicon / Dock / 快捷方式）
+├── scripts/window-bounds.py        # 窗口尺寸与 Edge 配置（prepare/read/theme）
+├── manifest.webmanifest            # PWA 清单（应用图标元数据）
 ├── dummy.json                      # 示例导入数据
 ├── screenshot-20260518-204754.png
 └── README.md

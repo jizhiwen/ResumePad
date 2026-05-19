@@ -1,9 +1,82 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ResumePad">
-  <rect width="512" height="512" rx="96" fill="#171717"/>
-  <rect x="96" y="88" width="320" height="336" rx="24" fill="#fafafa"/>
-  <rect x="144" y="152" width="224" height="20" rx="4" fill="#d4d4d4"/>
-  <rect x="144" y="200" width="184" height="16" rx="4" fill="#e5e5e5"/>
-  <rect x="144" y="236" width="200" height="16" rx="4" fill="#e5e5e5"/>
-  <rect x="144" y="272" width="160" height="16" rx="4" fill="#e5e5e5"/>
-  <rect x="144" y="324" width="120" height="28" rx="6" fill="#171717"/>
+  <defs>
+    <linearGradient id="bg" x1="8%" y1="0%" x2="92%" y2="100%">
+      <stop offset="0%" stop-color="#05050f"/>
+      <stop offset="40%" stop-color="#12122a"/>
+      <stop offset="100%" stop-color="#061018"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#22d3ee" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#05050f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="neon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="35%" stop-color="#38bdf8"/>
+      <stop offset="70%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="sheet" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="playGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="round">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <rect width="512" height="512" fill="url(#orb)"/>
+
+    <path d="M-20 420 Q180 360 280 480 T540 400" fill="none" stroke="url(#neon)" stroke-width="3" opacity="0.35"/>
+    <path d="M40 80 Q260 40 480 120" fill="none" stroke="url(#neon)" stroke-width="2" opacity="0.25"/>
+
+    <g transform="translate(256 278) rotate(-8) translate(-256 -278)" filter="url(#glow)">
+      <rect x="96" y="96" width="272" height="336" rx="32" fill="url(#sheet)"/>
+      <rect x="96" y="96" width="272" height="336" rx="32" fill="none" stroke="url(#neon)" stroke-width="3" opacity="0.85"/>
+      <rect x="96" y="96" width="120" height="336" rx="32" fill="url(#shine)" opacity="0.5"/>
+
+      <rect x="136" y="156" width="192" height="16" rx="8" fill="#94a3b8"/>
+      <rect x="136" y="196" width="160" height="11" rx="5.5" fill="#cbd5e1"/>
+      <rect x="136" y="228" width="176" height="11" rx="5.5" fill="#cbd5e1"/>
+      <rect x="136" y="260" width="128" height="11" rx="5.5" fill="#cbd5e1"/>
+
+      <rect x="136" y="308" width="152" height="40" rx="12" fill="url(#neon)" opacity="0.92"/>
+      <rect x="136" y="368" width="96" height="11" rx="5.5" fill="#cbd5e1"/>
+    </g>
+
+    <g transform="translate(372 132)" filter="url(#playGlow)">
+      <circle r="58" fill="#0b0b18" opacity="0.92"/>
+      <circle r="58" fill="none" stroke="url(#neon)" stroke-width="4"/>
+      <path d="M-10 -28 L-10 28 L34 0 Z" fill="url(#neon)"/>
+      <path d="M-22 -40 L-22 40" stroke="url(#neon)" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+    </g>
+
+    <circle cx="88" cy="96" r="4" fill="#38bdf8" opacity="0.9"/>
+    <circle cx="428" cy="388" r="3" fill="#f472b6" opacity="0.85"/>
+    <circle cx="448" cy="120" r="2.5" fill="#c4b5fd" opacity="0.8"/>
+    <circle cx="64" cy="360" r="2" fill="#22d3ee" opacity="0.75"/>
+  </g>
+
+  <rect width="512" height="512" rx="112" fill="none" stroke="url(#neon)" stroke-width="2.5" opacity="0.5"/>
 </svg>

@@ -8,6 +8,14 @@ if [ ! -f "$DESKTOP_FILE" ]; then
 fi
 
 rm -f "$DESKTOP_FILE"
+ICON_THEME="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
+PIXMAP="${XDG_DATA_HOME:-$HOME/.local/share}/pixmaps/resumepad.png"
+for size in 48 128 256 512; do
+  rm -f "$ICON_THEME/${size}x${size}/apps/resumepad.png"
+done
+rm -f "$PIXMAP"
+command -v gtk-update-icon-cache >/dev/null 2>&1 &&
+  gtk-update-icon-cache -f -t "$ICON_THEME" 2>/dev/null || true
 command -v update-desktop-database >/dev/null 2>&1 &&
   update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
 
