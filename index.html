@@ -24,42 +24,11 @@
       document.documentElement.style.color = fg;
       if (/[?&]standalone(?:=1)?(?:&|$)/.test(location.search)) {
         document.documentElement.dataset.standalone = '1';
-        setTimeout(function () {
-          document.documentElement.dataset.appReady = '1';
-        }, 3000);
       }
       var sw = parseInt(localStorage.getItem('resumepad_sidebar_width'), 10);
       if (sw >= 160 && sw <= 480) {
         document.documentElement.style.setProperty('--sidebar-width', sw + 'px');
       }
-    })();
-  </script>
-  <script>
-    (function () {
-      if (document.documentElement.dataset.standalone !== '1') return;
-      var KEY = 'resumepad_window_bounds';
-      function saveWindowBounds() {
-        try {
-          localStorage.setItem(KEY, JSON.stringify({
-            w: window.outerWidth,
-            h: window.outerHeight,
-            x: window.screenX,
-            y: window.screenY
-          }));
-        } catch (e) { /* standalone layout */ }
-      }
-      var resizeTimer;
-      window.addEventListener('resize', function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(saveWindowBounds, 400);
-      });
-      window.addEventListener('pagehide', saveWindowBounds);
-      window.addEventListener('beforeunload', saveWindowBounds);
-      document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'hidden') saveWindowBounds();
-      });
-      saveWindowBounds();
-      window.addEventListener('load', saveWindowBounds);
     })();
   </script>
   <style>

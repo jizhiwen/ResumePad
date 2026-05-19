@@ -73,7 +73,11 @@ deps_ok() {
     && "$NODE_BIN" -e "require('electron/package.json')" 2>/dev/null
 }
 
-"$NPM" install
+if [ -f package-lock.json ]; then
+  "$NPM" ci
+else
+  "$NPM" install
+fi
 
 if ! deps_ok; then
   echo "依赖不完整（常见于安装中断或 node_modules 损坏），正在重新安装…" >&2

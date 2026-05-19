@@ -38,7 +38,7 @@
 | Linux | `~/.config/ResumePad/` |
 | Windows | `%APPDATA%\ResumePad\` |
 
-窗口大小由 Electron 主进程写入 `window-bounds.json`。
+窗口大小与位置由 Electron 主进程在 `window-bounds.json` 中持久化（关闭/调整窗口时自动保存）。
 
 ## 界面说明
 
@@ -83,8 +83,8 @@
 推送符合 `v*` 的 tag 后，GitHub Actions 会在 Ubuntu 与 Windows 上分别构建安装包，并创建 Release：
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 产物：`ResumePad-*-linux-x64.AppImage`、`.deb`、`ResumePad-Setup-*-x64.exe`、`ResumePad-Portable-*-x64.exe`（文件名均为连字符，无空格）。
@@ -97,9 +97,8 @@ git push origin v1.0.0
 | Linux 额外依赖 | `librsvg2-bin`（图标）、`libfuse2`（AppImage，Ubuntu 22.04） |
 
 ```bash
-nvm use 20          # 或安装 Node 20 LTS
-npm ci
-./scripts/build-electron.sh linux   # 仅 Linux
+nvm use 20
+./scripts/build-electron.sh linux   # 含 npm ci 与 Node 版本检查
 ./scripts/build-electron.sh win     # 仅 Windows（建议在 windows-latest 上构建）
 npm start                           # 开发调试
 ```

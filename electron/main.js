@@ -5,15 +5,15 @@ const fs = require('fs');
 const MIN_W = 640;
 const MIN_H = 400;
 const DEFAULT = { w: 960, h: 500, x: 80, y: 50 };
+const BOUNDS_FILE = 'window-bounds.json';
 
 function boundsPath() {
-  return path.join(app.getPath('userData'), 'window-bounds.json');
+  return path.join(app.getPath('userData'), BOUNDS_FILE);
 }
 
 function loadBounds() {
   try {
-    const raw = fs.readFileSync(boundsPath(), 'utf8').trim();
-    const b = JSON.parse(raw);
+    const b = JSON.parse(fs.readFileSync(boundsPath(), 'utf8').trim());
     const w = Math.max(MIN_W, parseInt(b.w, 10) || DEFAULT.w);
     const h = Math.max(MIN_H, parseInt(b.h, 10) || DEFAULT.h);
     let x = parseInt(b.x, 10);
@@ -28,7 +28,7 @@ function loadBounds() {
 
 function clampToWorkArea(bounds) {
   const display = screen.getDisplayMatching(bounds);
-  const wa = display.workArea;
+  const { workArea: wa } = display;
   let { width, height, x, y } = bounds;
   if (width > wa.width * 0.96 || height > wa.height * 0.96) {
     return {
@@ -49,23 +49,20 @@ function saveBounds(win) {
   if (!win || win.isDestroyed()) return;
   try {
     const b = win.getBounds();
-    const data = { w: b.width, h: b.height, x: b.x, y: b.y };
-    const tmp = boundsPath() + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data));
-    fs.renameSync(tmp, boundsPath());
+    const dir = app.getPath('userData');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = boundsPath();
+    const tmp = file + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify({ w: b.width, h: b.height, x: b.x, y: b.y }));
+    fs.renameSync(tmp, file);
   } catch {
     /* ignore */
   }
 }
 
-function indexHtmlPath() {
-  return path.join(__dirname, '..', 'index.html');
-}
-
 function createWindow() {
-  const bounds = clampToWorkArea(loadBounds());
   const win = new BrowserWindow({
-    ...bounds,
+    ...clampToWorkArea(loadBounds()),
     minWidth: MIN_W,
     minHeight: MIN_H,
     show: false,
@@ -80,8 +77,7 @@ function createWindow() {
   });
 
   win.once('ready-to-show', () => win.show());
-
-  win.loadFile(indexHtmlPath(), { query: { standalone: '1' } });
+  win.loadFile(path.join(__dirname, '..', 'index.html'), { query: { standalone: '1' } });
 
   let saveTimer;
   const scheduleSave = () => {

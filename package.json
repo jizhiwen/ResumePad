@@ -5,6 +5,10 @@
   "main": "electron/main.js",
   "author": "ResumePad contributors <resumepad@users.noreply.github.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jizhiwen/ResumePad.git"
+  },
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -43,7 +47,6 @@
         "AppImage",
         "deb"
       ],
-      "artifactName": "ResumePad-${version}-${os}-${arch}.${ext}",
       "generateUpdatesFilesForAllChannels": false,
       "maintainer": "ResumePad contributors <resumepad@users.noreply.github.com>",
       "category": "Office",
