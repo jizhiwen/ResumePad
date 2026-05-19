@@ -67,7 +67,7 @@ rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 
 然后从 [Releases](https://github.com/jizhiwen/ResumePad/releases) 安装 AppImage 或 `.deb` 启动。
 
-卸载 Electron 版不会自动删除 `~/.config/ResumePad/`；清空数据前请先 **导出** JSON。
+卸载 Electron 版不会自动删除 `~/.config/resumepad/`；清空数据前请先 **导出** JSON。
 
 ## 界面说明
 
