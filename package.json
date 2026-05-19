@@ -1,0 +1,80 @@
+{
+  "name": "resumepad",
+  "version": "1.0.0",
+  "description": "任务切换时的上下文记录",
+  "main": "electron/main.js",
+  "author": "ResumePad contributors <resumepad@users.noreply.github.com>",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "icons": "sh scripts/electron-icons.sh",
+    "start": "electron .",
+    "pack": "npm run icons && npx electron-builder --dir",
+    "dist": "npm run icons && npx electron-builder",
+    "dist:linux": "npm run icons && npx electron-builder --linux",
+    "dist:win": "npm run icons && npx electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.resumepad.desktop",
+    "productName": "ResumePad",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "icons/**/*",
+      "manifest.webmanifest",
+      "!icons/generate-png.sh",
+      "!icons/install-icons.sh"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "maintainer": "ResumePad contributors <resumepad@users.noreply.github.com>",
+      "category": "Office",
+      "executableName": "resumepad",
+      "desktop": {
+        "Name": "ResumePad",
+        "Comment": "任务切换时的上下文记录",
+        "StartupWMClass": "resumepad",
+        "Categories": "Office;Utility;"
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "executableName": "ResumePad"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

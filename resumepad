@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# ResumePad 入口（安装后位于 ~/.local/opt/resumepad/resumepad，类似 /opt/drawio/drawio）。
+set -e
+_script="${0#./}"
+case "$_script" in /*) ;; *) _script="$PWD/$_script" ;; esac
+BIN="$(CDPATH= cd -- "$(dirname -- "$(readlink -f "$_script" 2>/dev/null || echo "$_script")")" && pwd)"
+
+if [ -f "$BIN/app/index.html" ]; then
+  export RESUMEPAD_APP_DIR="$BIN/app"
+  export RESUMEPAD_LIB="$BIN/lib"
+elif [ -f "$BIN/index.html" ]; then
+  export RESUMEPAD_APP_DIR="$BIN"
+  export RESUMEPAD_LIB="$BIN"
+else
+  echo "ResumePad 未正确安装。请运行: ./install-desktop-entry.sh" >&2
+  exit 1
+fi
+
+exec "$RESUMEPAD_LIB/launch-app.sh" "$@"

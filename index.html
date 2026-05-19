@@ -58,6 +58,8 @@
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') saveWindowBounds();
       });
+      saveWindowBounds();
+      window.addEventListener('load', saveWindowBounds);
     })();
   </script>
   <style>

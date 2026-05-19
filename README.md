@@ -2,7 +2,7 @@
 
 任务切换时的上下文记录小工具。在被打断或换任务前，把「目标、进度、下一步」等写清楚；回来时从左侧列表点选，几分钟内接上上次的工作状态。
 
-静态页面，**无需后端**。用 Edge 打开 `index.html` 即可；若希望 Dock/任务栏使用 **ResumePad 独立图标**（与 Edge 分开），可运行安装脚本。作者仅在 **Microsoft Edge** 上做过日常使用验证。
+静态页面，**无需后端**。推荐安装 **Electron 桌面版**（Windows / Linux，自带 Chromium，类似 draw.io）；也可用 Edge 打开 `index.html` 或运行 Linux 安装脚本。
 
 ![ResumePad 界面示例](screenshot-20260518-204754.png)
 
@@ -15,29 +15,106 @@
 3. **（可选）** 顶部 **导入** → 选择 [`dummy.json`](dummy.json) 体验示例数据。
 4. 需要切换任务时，点击 **Switch**（或 `N`），保存后可在左侧 **封存** 列表恢复上下文；预览页可 **编辑** 或双击区块修改。
 
-## 独立图标（与 Edge 分开）
+## Electron 桌面版（推荐，Windows + Linux）
 
-仅双击 `index.html` 时，Dock/任务栏会显示 **Edge** 图标。安装快捷方式后，用 **ResumePad 图标** 启动（独立窗口 + 独立图标）。
+与 draw.io 一样打包 **Electron**，不依赖本机 Edge。
+
+| 要求 | 说明 |
+|------|------|
+| Node.js | **18+**（仅构建时；Ubuntu 自带 `apt install nodejs` 多为 12，**不可用**） |
+| npm | 与 Node 20 配套（见下方安装命令） |
+| 图标工具 | `rsvg-convert` 或 ImageMagick（构建前生成 PNG） |
+
+### 安装 Node 20（Ubuntu，构建前执行一次）
+
+系统若已是 Node 12，安装 Electron 会报 `Unexpected token '?'`。请升级：
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node -v    # 应显示 v20.x 或 v22.x
+npm -v
+```
+
+然后删除旧依赖并重新构建：
+
+```bash
+cd ~/src/ResumePad
+rm -rf node_modules package-lock.json
+./scripts/build-electron.sh
+```
+
+### 构建安装包
+
+```bash
+cd ResumePad
+./scripts/build-electron.sh          # Linux + Windows（当前系统能编的目标）
+./scripts/build-electron.sh linux    # 仅 Linux（AppImage + .deb）
+./scripts/build-electron.sh win      # 仅 Windows（在 Windows 或交叉环境）
+```
+
+产物在 `dist/`：
+
+| 平台 | 文件 |
+|------|------|
+| **Linux** | `ResumePad-*-x86_64.AppImage`、`resumepad_*_amd64.deb` |
+| **Windows** | `ResumePad Setup *.exe`（安装包）、`ResumePad * portable.exe` |
+
+开发调试：
+
+```bash
+npm install
+npm start
+```
+
+用户数据目录（任务 IndexedDB、窗口大小）：
+
+| 平台 | 路径 |
+|------|------|
+| Linux | `~/.config/ResumePad/`（Electron 子目录） |
+| Windows | `%APPDATA%\ResumePad\` |
+
+窗口大小由 Electron 主进程写入 `window-bounds.json`，**无需 xwininfo**。
+
+---
+
+## Linux：Edge 应用模式（备选）
+
+不构建 Electron 时，可用系统 **Edge** + 安装脚本（体积更小，依赖本机 Edge）。
+
+| draw.io | ResumePad (Edge) |
+|---------|------------------|
+| `/opt/drawio/drawio` | `~/.local/opt/resumepad/resumepad` |
+| 内置 Chromium | 本机 **Microsoft Edge** |
+| 用户数据 | `~/.config/ResumePad/` |
+
+### 安装 / 卸载
+
+```bash
+./install-desktop-entry.sh              # 默认装到 ~/.local/opt/resumepad
+./install-desktop-entry.sh /opt/resumepad   # 系统级（需 sudo 写 /opt）
+./uninstall-desktop-entry.sh
+```
+
+安装后会得到：
+
+- 程序：`~/.local/opt/resumepad/resumepad`（与 `drawio` 同级入口）
+- 命令：`resumepad`（`~/.local/bin` 符号链接）
+- 菜单：`.desktop` 中 `Exec=…/resumepad`（**不再依赖 git 仓库路径**）
+- 应用文件：`~/.local/opt/resumepad/app/`（`index.html`、图标等）
+
+从应用菜单打开 **ResumePad** 即可；开发时仍可在仓库内执行 `./resumepad` 或 `./launch-app.sh`。
 
 | 系统 | 安装 | 卸载 |
 |------|------|------|
 | **Linux** | `./install-desktop-entry.sh` | `./uninstall-desktop-entry.sh` |
 | **Windows** | 双击 `install-desktop-entry.bat` | 双击 `uninstall-desktop-entry.bat` |
 
-安装后：
+**配置目录**（`~/.config/ResumePad/`，安装时自动初始化）：`window-bounds.json`、`app-root` → 安装目录下的 `app/`、`edge-profile`（IndexedDB）。
 
-- **Linux**：应用菜单搜索 **ResumePad** → 固定到 Dock；通过该图标启动。
-- **Windows**：桌面或开始菜单 **ResumePad** 快捷方式；使用独立 Edge 配置目录（`%LOCALAPPDATA%\ResumePad\EdgeProfile`），任务栏与 Edge 分开。**请始终用快捷方式启动**，数据只在该配置中。
+**窗口大小**：需 `x11-utils`（`xwininfo`）；经 `resumepad` 启动后自动记录。
 
-Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录与 `--class=resumepad`；Wayland 下默认用 X11 模式以便 Dock 正确分组。
-
-**窗口大小**：关闭时写入 `~/.config/ResumePad/window-bounds.json`（并同步 Edge 配置）；下次启动优先读该文件，用 `--window-size` / `--position` 一次打开，避免闪烁。删除整个 `~/.config/ResumePad/` 后需重新用启动器打开并关闭一次以生成记录。仅近全屏时重置为默认 960×500。
-
-**Dock 图标（重要）：** Chromium/Edge 在 `--app` 模式下，**运行中** Dock 使用网页 **PNG favicon**（`icons/icon-128.png`），未启动时菜单/Dock 固定项使用 `Icon=resumepad`。
-
-1. 执行 `./install-desktop-entry.sh`（安装图标与桌面项；`StartupWMClass=resumepad`，与启动参数 `--class` 一致）。
-2. 取消 Dock 旧固定，从应用菜单 **ResumePad** 启动并重新固定（勿从 Edge 图标启动）。
-3. 若 Dock 仍与 Edge 合并：执行 `xprop WM_CLASS` 查看类名，必要时设置 `RESUMEPAD_WM_CLASS=…` 后重装。
+**Dock：** 取消旧固定项后，从菜单重新打开并固定 ResumePad。
 
 ## 界面说明
 
@@ -95,16 +172,24 @@ Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录
 
 ```
 ResumePad/
+├── electron/main.js                # Electron 主进程
+├── package.json                    # Electron 构建配置
 ├── index.html                      # 全部 UI 与逻辑（单文件）
-├── launch-app.sh / launch-app.bat  # 启动器（安装脚本调用）
-├── install-desktop-entry.sh        # Linux 安装菜单项 / Dock
-├── uninstall-desktop-entry.sh      # Linux 卸载
+├── resumepad                       # Edge 版入口（Linux 安装用）
+├── lib/launch-app.sh               # Edge 应用模式
+├── scripts/build-electron.sh       # 构建 AppImage / deb / exe
+├── scripts/install-app.sh          # Edge 版安装到 ~/.local/opt/resumepad
+├── install-desktop-entry.sh
+├── uninstall-desktop-entry.sh
 ├── install-desktop-entry.bat         # Windows 安装快捷方式
 ├── uninstall-desktop-entry.bat     # Windows 卸载
 ├── install-windows-shortcut.ps1    # Windows 安装（由 .bat 调用）
 ├── uninstall-windows-shortcut.ps1  # Windows 卸载（由 .bat 调用）
 ├── icons/                          # 图标（PNG favicon / Dock / 快捷方式）
-├── scripts/window-bounds.py        # 窗口尺寸与 Edge 配置（prepare/read/theme）
+├── scripts/init-config.sh          # 初始化 ~/.config/ResumePad
+├── scripts/setup-app-link.sh       # app-root 符号链接
+├── scripts/bounds-wm.py              # 从 X11 读取窗口尺寸
+├── scripts/window-bounds.py        # 默认配置与 window-bounds.json
 ├── manifest.webmanifest            # PWA 清单（应用图标元数据）
 ├── dummy.json                      # 示例导入数据
 ├── screenshot-20260518-204754.png
