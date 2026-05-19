@@ -37,7 +37,7 @@
       "output": "dist",
       "buildResources": "build"
     },
-    "publish": null,
+    "publish": "never",
     "linux": {
       "target": [
         "AppImage",
