@@ -48,7 +48,6 @@
         "deb"
       ],
       "generateUpdatesFilesForAllChannels": false,
-      "afterInstall": "scripts/deb-after-install.sh",
       "maintainer": "ResumePad contributors <resumepad@users.noreply.github.com>",
       "category": "Office",
       "executableName": "resumepad",

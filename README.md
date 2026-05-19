@@ -57,9 +57,17 @@
 | `Default/Local Storage/` | 首次启动后 | `resumepad_theme`、`resumepad_sidebar_width` |
 | `window-bounds.json` | 首次调整或关闭窗口时 | `{"w":960,"h":500,"x":80,"y":50}` 等形式 |
 
-首次启动会自动删除旧版 Edge 遗留的 `app-root`、`edge-profile`；安装 `.deb` 时会移除 `~/.local/opt/resumepad` 旧启动器。
+若曾安装旧版 Edge 脚本，改用 Electron 前请**手动**删除：
 
-卸载应用不会自动删除配置目录；清空数据前请先 **导出** JSON。
+```bash
+rm -f ~/.local/bin/resumepad ~/.local/share/applications/resumepad.desktop
+rm -rf ~/.local/opt/resumepad
+rm -rf ~/.config/ResumePad/app-root ~/.config/ResumePad/edge-profile
+```
+
+然后从 [Releases](https://github.com/jizhiwen/ResumePad/releases) 安装 AppImage 或 `.deb` 启动。
+
+卸载 Electron 版不会自动删除 `~/.config/ResumePad/`；清空数据前请先 **导出** JSON。
 
 ## 界面说明
 
