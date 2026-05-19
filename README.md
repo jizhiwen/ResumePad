@@ -14,8 +14,8 @@
 
 | 平台 | 推荐 | 备选 |
 |------|------|------|
-| **Ubuntu** | `ResumePad-*-x86_64.AppImage`（免安装，赋予执行权限后双击） | `resumepad_*_amd64.deb`（`sudo apt install ./resumepad_*.deb`） |
-| **Windows** | `ResumePad Setup *.exe` | `ResumePad * portable.exe`（免安装） |
+| **Ubuntu** | `ResumePad-*-linux-x64.AppImage`（免安装，`chmod +x` 后双击） | `ResumePad-*-linux-x64.deb`（`sudo apt install ./ResumePad-*.deb`） |
+| **Windows** | `ResumePad-Setup-*-x64.exe`（安装包） | `ResumePad-Portable-*-x64.exe`（免安装） |
 
 **Ubuntu AppImage 提示：** 若无法运行，可安装 FUSE：`sudo apt install libfuse2`（22.04）或 `libfuse3`（24.04+）。
 
@@ -87,7 +87,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-产物：`ResumePad-*.AppImage`、`resumepad_*_amd64.deb`、Windows 安装包与 portable exe。
+产物：`ResumePad-*-linux-x64.AppImage`、`.deb`、`ResumePad-Setup-*-x64.exe`、`ResumePad-Portable-*-x64.exe`（文件名均为连字符，无空格）。
 
 ## 从源码构建（开发者）
 

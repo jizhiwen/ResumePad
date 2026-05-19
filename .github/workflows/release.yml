@@ -35,7 +35,6 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.deb
-            dist/latest-linux.yml
 
   build-windows:
     runs-on: windows-latest
@@ -71,5 +70,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**
+          files: |
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.exe
           generate_release_notes: true

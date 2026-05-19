@@ -37,11 +37,14 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "artifactName": "ResumePad-${version}-${os}-${arch}.${ext}",
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
+      "artifactName": "ResumePad-${version}-${os}-${arch}.${ext}",
+      "generateUpdatesFilesForAllChannels": false,
       "maintainer": "ResumePad contributors <resumepad@users.noreply.github.com>",
       "category": "Office",
       "executableName": "resumepad",
@@ -70,10 +73,14 @@
       "executableName": "ResumePad"
     },
     "nsis": {
+      "artifactName": "ResumePad-Setup-${version}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "ResumePad-Portable-${version}-${arch}.${ext}"
     }
   }
 }
