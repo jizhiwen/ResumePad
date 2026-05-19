@@ -31,14 +31,28 @@
 
 - 任务数据保存在本机 **IndexedDB**（`resumepad_db`），不会上传到任何服务器。
 - 建议定期 **导出** JSON 备份；换机或重装前务必先导出。
-- 用户数据目录：
+
+### 用户数据目录
 
 | 平台 | 路径 |
 |------|------|
 | Linux | `~/.config/ResumePad/` |
 | Windows | `%APPDATA%\ResumePad\` |
 
-窗口大小与位置由 Electron 主进程在 `window-bounds.json` 中持久化（关闭/调整窗口时自动保存）。
+**何时创建：** 安装后**首次启动** ResumePad（Electron）时，系统会自动创建该目录及 Chromium 配置子目录；无需手动新建。
+
+**目录内容（常见）：**
+
+| 路径 / 文件 | 何时写入 | 说明 |
+|-------------|----------|------|
+| `IndexedDB/` | 首次启动后，有任务/设置操作时 | 封存任务、完成历史、语言与摘要设置等（库名 `resumepad_db`） |
+| `Local Storage/` | 首次启动后 | 主题（`resumepad_theme`）、侧栏宽度（`resumepad_sidebar_width`）等 |
+| `window-bounds.json` | 首次**调整大小、移动或关闭**窗口时 | 窗口宽高与位置；主进程写入，启动时读取 |
+| `Preferences`、`Cache/` 等 | 首次启动时 | Electron / Chromium 内部配置与缓存，一般无需手动修改 |
+
+卸载应用**不会**自动删除此目录；若要清空本机数据，可退出应用后手动删除整个 `ResumePad` 文件夹（删除前请先 **导出** JSON）。
+
+> 若曾使用旧版 Edge 安装脚本，同一目录下可能仍有 `edge-profile/`、`app-root` 等遗留项；当前 Electron 版不再使用它们，可自行删除。
 
 ## 界面说明
 
