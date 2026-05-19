@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="任务切换时的上下文记录小工具" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <title>ResumePad — 任务上下文恢复</title>
   <script>
     (function () {
@@ -10,6 +12,52 @@
       var t = localStorage.getItem(k);
       var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      if (/[?&]standalone(?:=1)?(?:&|$)/.test(location.search)) {
+        document.documentElement.dataset.standalone = '1';
+      }
+    })();
+  </script>
+  <script>
+    (function () {
+      if (document.documentElement.dataset.standalone !== '1') return;
+      var KEY = 'resumepad_window_bounds';
+      var defaults = { w: 960, h: 500, x: 80, y: 50 };
+      function read() {
+        try {
+          var s = JSON.parse(localStorage.getItem(KEY) || 'null');
+          if (s && s.w > 200 && s.h > 200) return s;
+        } catch (e) {}
+        return null;
+      }
+      function apply() {
+        var s = read() || defaults;
+        try {
+          if (typeof s.x === 'number' && typeof s.y === 'number') window.moveTo(s.x, s.y);
+          window.resizeTo(s.w, s.h);
+        } catch (e) {}
+      }
+      function save() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify({
+            w: window.outerWidth,
+            h: window.outerHeight,
+            x: window.screenX,
+            y: window.screenY
+          }));
+        } catch (e) {}
+      }
+      function scheduleApply() {
+        apply();
+        setTimeout(apply, 120);
+        setTimeout(apply, 450);
+        setTimeout(apply, 900);
+      }
+      window.addEventListener('DOMContentLoaded', scheduleApply);
+      window.addEventListener('pagehide', save);
+      window.addEventListener('beforeunload', save);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') save();
+      });
     })();
   </script>
   <style>
@@ -64,6 +112,47 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* launch-app（?standalone=1）：铺满 960px 宽窗口，无四周灰边 */
+    html[data-standalone="1"],
+    html[data-standalone="1"] body {
+      margin: 0;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    html[data-standalone="1"] .app {
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      margin: 0;
+      min-height: 0;
+    }
+
+    html[data-standalone="1"] .topbar {
+      flex-shrink: 0;
+    }
+
+    html[data-standalone="1"] .layout {
+      flex: 1;
+      min-height: 0;
+    }
+
+    html[data-standalone="1"] .sidebar {
+      max-height: none;
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    html[data-standalone="1"] .main {
+      min-height: 0;
+      height: 100%;
+      padding: 24px 32px 32px;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
     .topbar, header {

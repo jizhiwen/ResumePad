@@ -2,7 +2,7 @@
 
 任务切换时的上下文记录小工具。在被打断或换任务前，把「目标、进度、下一步」等写清楚；回来时从左侧列表点选，几分钟内接上上次的工作状态。
 
-单文件静态页面，**无需安装、无需服务器**，用浏览器直接打开 `index.html` 即可使用。作者仅在 **Microsoft Edge** 上做过日常使用验证；理论上其他现代浏览器（Chrome、Firefox 等）也可运行，但未逐一测试。
+静态页面，**无需后端**。用 Edge 打开 `index.html` 即可；若希望 Dock/任务栏使用 **ResumePad 独立图标**（与 Edge 分开），可运行安装脚本。作者仅在 **Microsoft Edge** 上做过日常使用验证。
 
 ![ResumePad 界面示例](screenshot-20260518-204754.png)
 
@@ -11,10 +11,29 @@
 ## 快速开始
 
 1. 克隆或下载本仓库。
-2. 双击 `index.html`，或在 Edge 地址栏输入本地路径，例如：`file:///home/you/src/ResumePad/index.html`。
-3. **（可选）** 点击顶部 **导入**，选择仓库中的 [`dummy.json`](dummy.json)，用示例数据体验封存、预览、编辑与导入流程（见下方「示例数据」）。
-4. 需要切换任务时，点击顶部 **Switch**（或按 `N`），填写/更新上下文后保存。
-5. 回到某任务时，在左侧 **封存** 列表中点选即可浏览；双击某一区块，或点预览页底部 **编辑**，可进入编辑。
+2. 双击 `index.html`（或在 Edge 中打开本地路径）。
+3. **（可选）** 顶部 **导入** → 选择 [`dummy.json`](dummy.json) 体验示例数据。
+4. 需要切换任务时，点击 **Switch**（或 `N`），保存后可在左侧 **封存** 列表恢复上下文；预览页可 **编辑** 或双击区块修改。
+
+## 独立图标（与 Edge 分开）
+
+仅双击 `index.html` 时，Dock/任务栏会显示 **Edge** 图标。安装快捷方式后，用 **ResumePad 图标** 启动（独立窗口 + 独立图标）。
+
+| 系统 | 安装 | 卸载 |
+|------|------|------|
+| **Linux** | `./install-desktop-entry.sh` | `./uninstall-desktop-entry.sh` |
+| **Windows** | 双击 `install-desktop-entry.bat` | 双击 `uninstall-desktop-entry.bat` |
+
+安装后：
+
+- **Linux**：应用菜单搜索 **ResumePad** → 固定到 Dock；通过该图标启动。
+- **Windows**：桌面或开始菜单 **ResumePad** 快捷方式；使用独立 Edge 配置目录（`%LOCALAPPDATA%\ResumePad\EdgeProfile`），任务栏与 Edge 分开。**请始终用快捷方式启动**，数据只在该配置中。
+
+Linux 启动器会设置 `CHROME_DESKTOP=resumepad.desktop`、独立配置目录与 `--class=ResumePad`；Wayland 下默认用 X11 模式以便 Dock 正确分组。
+
+**窗口大小**：通过启动器 / 快捷方式打开（`?standalone=1`）时，页面会记住上次关闭时的窗口大小（默认约 **960×500**），保存在该 Edge 配置的 `localStorage` 中。
+
+**若仍与 Edge 图标合并：** 取消 Dock 旧固定 → 重新 `./install-desktop-entry.sh` → 只从应用菜单 **ResumePad** 启动并再固定。必要时用 `xprop WM_CLASS` 查看窗口类名，并改 `~/.local/share/applications/resumepad.desktop` 中的 `StartupWMClass=`。
 
 ## 界面说明
 
@@ -66,14 +85,23 @@
 - 建议定期使用 **导出** 做 JSON 备份；换机或清缓存前务必先导出。
 - 导出 JSON 包含 `version`、`tasks`、`history`、`settings`（摘要复制选项等）。
 - 若曾使用旧版 localStorage，首次打开会自动迁移到 IndexedDB。
+- Windows 快捷方式：`%LOCALAPPDATA%\ResumePad\EdgeProfile`；Linux 启动器：`~/.config/ResumePad/edge-profile`。与直接双击 `index.html` 的 Edge **不共用**数据。
 
 ## 项目结构
 
 ```
 ResumePad/
 ├── index.html                      # 全部 UI 与逻辑（单文件）
-├── dummy.json                      # 示例导入数据（演示与验证）
-├── screenshot-20260518-204754.png  # 界面示例截图
+├── launch-app.sh / launch-app.bat  # 启动器（安装脚本调用）
+├── install-desktop-entry.sh        # Linux 安装菜单项 / Dock
+├── uninstall-desktop-entry.sh      # Linux 卸载
+├── install-desktop-entry.bat         # Windows 安装快捷方式
+├── uninstall-desktop-entry.bat     # Windows 卸载
+├── install-windows-shortcut.ps1    # Windows 安装（由 .bat 调用）
+├── uninstall-windows-shortcut.ps1  # Windows 卸载（由 .bat 调用）
+├── icons/                          # 图标（favicon / Dock / 快捷方式）
+├── dummy.json                      # 示例导入数据
+├── screenshot-20260518-204754.png
 └── README.md
 ```
 
