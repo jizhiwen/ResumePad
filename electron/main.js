@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -60,6 +60,21 @@ function saveBounds(win) {
   }
 }
 
+function attachExternalLinkHandler(win) {
+  const openExternal = (url) => {
+    if (/^https?:/i.test(url)) shell.openExternal(url);
+  };
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    openExternal(url);
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('file:')) return;
+    event.preventDefault();
+    openExternal(url);
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     ...clampToWorkArea(loadBounds()),
@@ -76,6 +91,7 @@ function createWindow() {
     },
   });
 
+  attachExternalLinkHandler(win);
   win.once('ready-to-show', () => win.show());
   win.loadFile(path.join(__dirname, '..', 'index.html'), { query: { standalone: '1' } });
 
