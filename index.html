@@ -1735,6 +1735,21 @@
             await insertImageInField(el, file);
           }
         });
+        el.addEventListener('keydown', (e) => {
+          if (!$('#taskDetailView')?.classList.contains('is-editing')) return;
+          if (e.key !== 'Enter' || e.isComposing) return;
+          if (e.altKey) {
+            e.preventDefault();
+            if (document.queryCommandSupported('insertLineBreak')) {
+              document.execCommand('insertLineBreak');
+            } else {
+              document.execCommand('insertHTML', false, '<br>');
+            }
+            return;
+          }
+          e.preventDefault();
+          void submitFormEdit();
+        });
       });
     }
 
