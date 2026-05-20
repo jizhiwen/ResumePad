@@ -1216,6 +1216,7 @@
     };
 
     const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
+    const EDIT_FIELD_ORDER = ['title', ...RICH_FIELDS];
 
     function cloneDefaultSummaryInclude() {
       return { ...DEFAULT_SUMMARY_INCLUDE };
@@ -1737,6 +1738,21 @@
         });
         el.addEventListener('keydown', (e) => {
           if (!$('#taskDetailView')?.classList.contains('is-editing')) return;
+          if (e.key === 'Tab') {
+            const idx = EDIT_FIELD_ORDER.indexOf(el.id);
+            if (idx === -1) return;
+            if (e.shiftKey) {
+              if (idx === 0) return;
+              e.preventDefault();
+              focusFormField(EDIT_FIELD_ORDER[idx - 1], { collapse: 'end' });
+              return;
+            }
+            if (idx < EDIT_FIELD_ORDER.length - 1) {
+              e.preventDefault();
+              focusFormField(EDIT_FIELD_ORDER[idx + 1], { collapse: 'end' });
+            }
+            return;
+          }
           if (e.key !== 'Enter' || e.isComposing) return;
           if (e.altKey) {
             e.preventDefault();

@@ -107,6 +107,7 @@ rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 | `T` | 切换浅色 / 深色主题 |
 | `Enter` | 编辑状态下保存 |
 | `Alt+Enter` | 编辑状态下换行 |
+| `Tab` / `Shift+Tab` | 编辑状态下切换到下一/上一编辑框 |
 | `Esc` | 在编辑表单中取消并返回浏览 |
 
 ## 发布新版本（维护者）
