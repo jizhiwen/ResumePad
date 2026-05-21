@@ -627,6 +627,7 @@
       margin: 8px 0;
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      cursor: zoom-in;
     }
 
     .rich-input a.rich-auto-link {
@@ -653,6 +654,53 @@
       margin: 8px 0;
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      cursor: zoom-in;
+    }
+
+    .image-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.78);
+      box-sizing: border-box;
+      cursor: zoom-out;
+    }
+
+    .image-preview-overlay.hidden { display: none; }
+
+    .image-preview-overlay .image-preview-img {
+      max-width: min(96vw, 100%);
+      max-height: 96vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      cursor: default;
+    }
+
+    .image-preview-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 2.25rem;
+      height: 2.25rem;
+      padding: 0;
+      font-size: 1.25rem;
+      line-height: 1;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius);
+    }
+
+    .image-preview-close:hover {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
     }
 
 
@@ -808,6 +856,10 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="image-preview-overlay hidden" id="imagePreviewOverlay" role="dialog" aria-modal="true" aria-label="Image preview">
+    <button type="button" class="image-preview-close" id="imagePreviewClose" aria-label="Close">×</button>
+    <img class="image-preview-img" id="imagePreviewImg" alt="" />
+  </div>
 
   <dialog id="confirmDialog">
     <h3 id="confirmTitle">确认</h3>
@@ -2737,8 +2789,45 @@
       showView('task');
     }
 
+    function showImagePreview(src) {
+      const overlay = $('#imagePreviewOverlay');
+      const img = $('#imagePreviewImg');
+      if (!overlay || !img || !src) return;
+      img.src = src;
+      overlay.classList.remove('hidden');
+    }
+
+    function hideImagePreview() {
+      const overlay = $('#imagePreviewOverlay');
+      const img = $('#imagePreviewImg');
+      if (!overlay) return;
+      overlay.classList.add('hidden');
+      if (img) img.removeAttribute('src');
+    }
+
+    function initImagePreview() {
+      const overlay = $('#imagePreviewOverlay');
+      if (!overlay) return;
+      $('#taskDetailView').addEventListener(
+        'dblclick',
+        (e) => {
+          const thumb = e.target.closest('.rich-input img, .rich-body img');
+          if (!thumb?.src) return;
+          e.preventDefault();
+          e.stopPropagation();
+          showImagePreview(thumb.src);
+        },
+        true,
+      );
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target.closest('#imagePreviewClose')) hideImagePreview();
+      });
+      $('#imagePreviewImg').addEventListener('click', (e) => e.stopPropagation());
+    }
+
     function initTaskDetailDblClick() {
       $('#taskDetailView').addEventListener('dblclick', (e) => {
+        if (e.target.closest('.rich-input img, .rich-body img')) return;
         if (selectedFromHistory || !selectedId) return;
         if ($('#taskDetailView').classList.contains('is-editing')) return;
         if (e.target.closest('.detail-actions, button, a.rich-auto-link')) return;
@@ -2998,6 +3087,12 @@
         toggleTheme();
       }
       if (e.key === 'Escape') {
+        const preview = $('#imagePreviewOverlay');
+        if (preview && !preview.classList.contains('hidden')) {
+          e.preventDefault();
+          hideImagePreview();
+          return;
+        }
         if (!isTaskEditing()) return;
         e.preventDefault();
         cancelFormEdit();
@@ -3008,6 +3103,7 @@
       try {
       initSidebarResize();
       initRichFields();
+      initImagePreview();
       initTaskDetailDblClick();
       if (!window.indexedDB) {
         toast(t('toast.noIdb'));
