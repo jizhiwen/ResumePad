@@ -13,6 +13,7 @@ yarn-error.log*
 # electron-builder
 dist/
 build/
+vendor/tesseract/
 
 # Logs
 *.log
