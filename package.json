@@ -16,18 +16,11 @@
   },
   "scripts": {
     "icons": "sh scripts/electron-icons.sh",
-    "vendor:tesseract": "sh scripts/setup-tesseract-vendor.sh",
-    "postinstall": "sh scripts/setup-tesseract-vendor.sh",
-    "start": "npm run vendor:tesseract && electron .",
+    "start": "electron .",
     "pack": "npm run icons && npx electron-builder --dir --publish never",
     "dist": "npm run icons && npx electron-builder --publish never",
     "dist:linux": "npm run icons && npx electron-builder --linux --publish never",
     "dist:win": "npm run icons && npx electron-builder --win --publish never"
-  },
-  "dependencies": {
-    "@tesseract.js-data/chi_sim": "^1.0.0",
-    "@tesseract.js-data/eng": "^1.0.0",
-    "tesseract.js": "^5.1.1"
   },
   "devDependencies": {
     "electron": "^33.2.1",
@@ -41,12 +34,8 @@
       "electron/**/*",
       "index.html",
       "icons/**/*",
-      "vendor/tesseract/**/*",
       "manifest.webmanifest",
       "!icons/generate-png.sh"
-    ],
-    "asarUnpack": [
-      "vendor/tesseract/**/*"
     ],
     "directories": {
       "output": "dist",
@@ -96,10 +85,5 @@
     "portable": {
       "artifactName": "ResumePad-Portable-${version}-${arch}.${ext}"
     }
-  },
-  "dependencies": {
-    "@tesseract.js-data/chi_sim": "^1.0.0",
-    "@tesseract.js-data/eng": "^1.0.0",
-    "tesseract.js": "^5.1.1"
   }
 }

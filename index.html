@@ -703,34 +703,6 @@
       color: #fff;
     }
 
-    .image-preview-actions {
-      position: absolute;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 1;
-    }
-
-    .image-preview-actions button {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 6px 12px;
-      font-size: 0.8125rem;
-    }
-
-    .image-preview-actions button:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.26);
-      color: #fff;
-    }
-
-    .image-preview-actions button:disabled {
-      opacity: 0.55;
-      cursor: wait;
-    }
-
 
     .kbd {
       font-family: var(--mono);
@@ -887,9 +859,6 @@
   <div class="image-preview-overlay hidden" id="imagePreviewOverlay" role="dialog" aria-modal="true" aria-label="Image preview">
     <button type="button" class="image-preview-close" id="imagePreviewClose" aria-label="Close">×</button>
     <img class="image-preview-img" id="imagePreviewImg" alt="" />
-    <div class="image-preview-actions">
-      <button type="button" id="imagePreviewOcr" data-i18n="imagePreview.copyText">复制图中文字</button>
-    </div>
   </div>
 
   <dialog id="confirmDialog">
@@ -1077,14 +1046,6 @@
           importOk: '导入成功',
           importBad: '导入失败：文件格式不对',
           noIdb: '浏览器不支持 IndexedDB，请升级 Edge/Chrome',
-          ocrRunning: '正在识别图中文字…',
-          ocrCopied: '已复制识别文字',
-          ocrEmpty: '未识别到文字',
-          ocrFailed: '文字识别失败',
-          ocrUnavailable: '缺少离线 OCR 资源，请重新安装或运行 npm run vendor:tesseract',
-        },
-        imagePreview: {
-          copyText: '复制图中文字',
         },
         agent: {
           intro: '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
@@ -1237,14 +1198,6 @@
           importOk: 'Import complete',
           importBad: 'Import failed: invalid file',
           noIdb: 'IndexedDB not supported — use Edge or Chrome',
-          ocrRunning: 'Recognizing text in image…',
-          ocrCopied: 'Recognized text copied',
-          ocrEmpty: 'No text recognized',
-          ocrFailed: 'OCR failed',
-          ocrUnavailable: 'Offline OCR files missing — reinstall or run npm run vendor:tesseract',
-        },
-        imagePreview: {
-          copyText: 'Copy text from image',
         },
         agent: {
           intro: 'I am resuming a previously interrupted task. Use the context below and prioritize the next step.',
@@ -2836,55 +2789,11 @@
       showView('task');
     }
 
-    let tesseractScriptPromise = null;
-    let ocrWorkerPromise = null;
-
-    function tesseractVendorBase() {
-      return new URL('vendor/tesseract/', window.location.href).href;
-    }
-
-    function loadTesseractScript() {
-      if (window.Tesseract) return Promise.resolve(window.Tesseract);
-      if (tesseractScriptPromise) return tesseractScriptPromise;
-      tesseractScriptPromise = new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = new URL('vendor/tesseract/tesseract.min.js', window.location.href).href;
-        s.onload = () => resolve(window.Tesseract);
-        s.onerror = () => reject(new Error('tesseract script'));
-        document.head.appendChild(s);
-      });
-      return tesseractScriptPromise;
-    }
-
-    async function getOcrWorker() {
-      if (ocrWorkerPromise) return ocrWorkerPromise;
-      ocrWorkerPromise = (async () => {
-        const Tesseract = await loadTesseractScript();
-        const base = tesseractVendorBase();
-        const worker = await Tesseract.createWorker({
-          workerPath: `${base}worker.min.js`,
-          langPath: `${base}tessdata`,
-          corePath: base,
-          workerBlobURL: false,
-          gzip: true,
-        });
-        await worker.loadLanguage('chi_sim+eng');
-        await worker.initialize('chi_sim+eng');
-        return worker;
-      })().catch((err) => {
-        ocrWorkerPromise = null;
-        throw err;
-      });
-      return ocrWorkerPromise;
-    }
-
     function showImagePreview(src) {
       const overlay = $('#imagePreviewOverlay');
       const img = $('#imagePreviewImg');
-      const ocrBtn = $('#imagePreviewOcr');
       if (!overlay || !img || !src) return;
       img.src = src;
-      if (ocrBtn) ocrBtn.disabled = false;
       overlay.classList.remove('hidden');
     }
 
@@ -2894,33 +2803,6 @@
       if (!overlay) return;
       overlay.classList.add('hidden');
       if (img) img.removeAttribute('src');
-    }
-
-    async function copyTextFromPreviewImage() {
-      const img = $('#imagePreviewImg');
-      const btn = $('#imagePreviewOcr');
-      if (!img?.src || !btn) return;
-      btn.disabled = true;
-      toast(t('toast.ocrRunning'));
-      try {
-        const worker = await getOcrWorker();
-        const { data } = await worker.recognize(img.src);
-        const text = (data?.text || '').trim();
-        if (!text) {
-          toast(t('toast.ocrEmpty'));
-          return;
-        }
-        await copyText(text, t('toast.ocrCopied'));
-      } catch (err) {
-        console.error(err);
-        const msg =
-          err?.message === 'tesseract script' || String(err).includes('fetch')
-            ? t('toast.ocrUnavailable')
-            : t('toast.ocrFailed');
-        toast(msg);
-      } finally {
-        btn.disabled = false;
-      }
     }
 
     function initImagePreview() {
@@ -2941,10 +2823,6 @@
         if (e.target === overlay || e.target.closest('#imagePreviewClose')) hideImagePreview();
       });
       $('#imagePreviewImg').addEventListener('click', (e) => e.stopPropagation());
-      $('#imagePreviewOcr').addEventListener('click', (e) => {
-        e.stopPropagation();
-        void copyTextFromPreviewImage();
-      });
     }
 
     function initTaskDetailDblClick() {

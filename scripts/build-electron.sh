@@ -91,8 +91,6 @@ if ! deps_ok; then
   exit 1
 fi
 
-sh "$ROOT/scripts/setup-tesseract-vendor.sh"
-
 case "${1:-all}" in
   linux) "$NPM" run dist:linux ;;
   win|windows) "$NPM" run dist:win ;;
