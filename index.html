@@ -680,7 +680,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: auto;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .image-preview-overlay.is-panning .image-preview-stage {
+      cursor: grabbing;
     }
 
     .image-preview-overlay .image-preview-img {
@@ -692,9 +697,11 @@
       border: none;
       border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-      cursor: default;
+      cursor: inherit;
       transform-origin: center center;
       will-change: transform;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .image-preview-close {
@@ -2807,23 +2814,33 @@
     const IMAGE_PREVIEW_ZOOM_MIN = 0.25;
     const IMAGE_PREVIEW_ZOOM_MAX = 8;
     let imagePreviewZoom = 1;
+    let imagePreviewPanX = 0;
+    let imagePreviewPanY = 0;
+    let imagePreviewDrag = null;
+    let imagePreviewSuppressClick = false;
 
-    function applyImagePreviewZoom() {
+    function applyImagePreviewTransform() {
       const img = $('#imagePreviewImg');
       if (!img) return;
-      img.style.transform = imagePreviewZoom === 1 ? '' : `scale(${imagePreviewZoom})`;
+      if (imagePreviewZoom === 1 && !imagePreviewPanX && !imagePreviewPanY) {
+        img.style.transform = '';
+        return;
+      }
+      img.style.transform = `translate(${imagePreviewPanX}px, ${imagePreviewPanY}px) scale(${imagePreviewZoom})`;
     }
 
-    function resetImagePreviewZoom() {
+    function resetImagePreviewView() {
       imagePreviewZoom = 1;
-      applyImagePreviewZoom();
+      imagePreviewPanX = 0;
+      imagePreviewPanY = 0;
+      applyImagePreviewTransform();
     }
 
     function showImagePreview(src) {
       const overlay = $('#imagePreviewOverlay');
       const img = $('#imagePreviewImg');
       if (!overlay || !img || !src) return;
-      resetImagePreviewZoom();
+      resetImagePreviewView();
       img.src = src;
       overlay.classList.remove('hidden');
     }
@@ -2832,17 +2849,23 @@
       const overlay = $('#imagePreviewOverlay');
       const img = $('#imagePreviewImg');
       if (!overlay) return;
+      overlay.classList.remove('is-panning');
       overlay.classList.add('hidden');
+      imagePreviewDrag = null;
       if (img) {
         img.removeAttribute('src');
         img.style.transform = '';
       }
       imagePreviewZoom = 1;
+      imagePreviewPanX = 0;
+      imagePreviewPanY = 0;
     }
 
     function initImagePreview() {
       const overlay = $('#imagePreviewOverlay');
-      if (!overlay) return;
+      const stage = $('#imagePreviewStage');
+      const img = $('#imagePreviewImg');
+      if (!overlay || !stage || !img) return;
       $('#taskDetailView').addEventListener(
         'dblclick',
         (e) => {
@@ -2855,10 +2878,46 @@
         true,
       );
       overlay.addEventListener('click', (e) => {
-        if (e.target.closest('#imagePreviewImg')) return;
+        if (e.target.closest('#imagePreviewImg, #imagePreviewStage')) return;
         hideImagePreview();
       });
-      $('#imagePreviewImg').addEventListener('click', (e) => e.stopPropagation());
+      img.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (imagePreviewSuppressClick) {
+          imagePreviewSuppressClick = false;
+          e.preventDefault();
+        }
+      });
+      const startPreviewPan = (e) => {
+        if (overlay.classList.contains('hidden') || e.button !== 0) return;
+        imagePreviewDrag = {
+          startX: e.clientX,
+          startY: e.clientY,
+          panX: imagePreviewPanX,
+          panY: imagePreviewPanY,
+          moved: false,
+        };
+        overlay.classList.add('is-panning');
+        e.preventDefault();
+      };
+      stage.addEventListener('mousedown', startPreviewPan);
+      const movePreviewPan = (e) => {
+        if (!imagePreviewDrag) return;
+        const dx = e.clientX - imagePreviewDrag.startX;
+        const dy = e.clientY - imagePreviewDrag.startY;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) imagePreviewDrag.moved = true;
+        imagePreviewPanX = imagePreviewDrag.panX + dx;
+        imagePreviewPanY = imagePreviewDrag.panY + dy;
+        applyImagePreviewTransform();
+      };
+      const endPreviewPan = () => {
+        if (!imagePreviewDrag) return;
+        if (imagePreviewDrag.moved) imagePreviewSuppressClick = true;
+        imagePreviewDrag = null;
+        overlay.classList.remove('is-panning');
+      };
+      document.addEventListener('mousemove', movePreviewPan);
+      document.addEventListener('mouseup', endPreviewPan);
       overlay.addEventListener(
         'wheel',
         (e) => {
@@ -2869,7 +2928,7 @@
             IMAGE_PREVIEW_ZOOM_MAX,
             Math.max(IMAGE_PREVIEW_ZOOM_MIN, imagePreviewZoom * factor),
           );
-          applyImagePreviewZoom();
+          applyImagePreviewTransform();
         },
         { passive: false },
       );
