@@ -662,8 +662,9 @@
       inset: 0;
       z-index: 200;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: stretch;
       padding: 24px;
       background: rgba(0, 0, 0, 0.78);
       box-sizing: border-box;
@@ -671,6 +672,16 @@
     }
 
     .image-preview-overlay.hidden { display: none; }
+
+    .image-preview-stage {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
 
     .image-preview-overlay .image-preview-img {
       max-width: min(96vw, 100%);
@@ -682,6 +693,8 @@
       border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
       cursor: default;
+      transform-origin: center center;
+      will-change: transform;
     }
 
     .image-preview-close {
@@ -858,7 +871,9 @@
   <div class="toast" id="toast"></div>
   <div class="image-preview-overlay hidden" id="imagePreviewOverlay" role="dialog" aria-modal="true" aria-label="Image preview">
     <button type="button" class="image-preview-close" id="imagePreviewClose" aria-label="Close">×</button>
-    <img class="image-preview-img" id="imagePreviewImg" alt="" />
+    <div class="image-preview-stage" id="imagePreviewStage">
+      <img class="image-preview-img" id="imagePreviewImg" alt="" />
+    </div>
   </div>
 
   <dialog id="confirmDialog">
@@ -2789,10 +2804,26 @@
       showView('task');
     }
 
+    const IMAGE_PREVIEW_ZOOM_MIN = 0.25;
+    const IMAGE_PREVIEW_ZOOM_MAX = 8;
+    let imagePreviewZoom = 1;
+
+    function applyImagePreviewZoom() {
+      const img = $('#imagePreviewImg');
+      if (!img) return;
+      img.style.transform = imagePreviewZoom === 1 ? '' : `scale(${imagePreviewZoom})`;
+    }
+
+    function resetImagePreviewZoom() {
+      imagePreviewZoom = 1;
+      applyImagePreviewZoom();
+    }
+
     function showImagePreview(src) {
       const overlay = $('#imagePreviewOverlay');
       const img = $('#imagePreviewImg');
       if (!overlay || !img || !src) return;
+      resetImagePreviewZoom();
       img.src = src;
       overlay.classList.remove('hidden');
     }
@@ -2802,7 +2833,11 @@
       const img = $('#imagePreviewImg');
       if (!overlay) return;
       overlay.classList.add('hidden');
-      if (img) img.removeAttribute('src');
+      if (img) {
+        img.removeAttribute('src');
+        img.style.transform = '';
+      }
+      imagePreviewZoom = 1;
     }
 
     function initImagePreview() {
@@ -2820,9 +2855,24 @@
         true,
       );
       overlay.addEventListener('click', (e) => {
-        if (e.target === overlay || e.target.closest('#imagePreviewClose')) hideImagePreview();
+        if (e.target.closest('#imagePreviewImg')) return;
+        hideImagePreview();
       });
       $('#imagePreviewImg').addEventListener('click', (e) => e.stopPropagation());
+      overlay.addEventListener(
+        'wheel',
+        (e) => {
+          if (overlay.classList.contains('hidden') || !e.ctrlKey) return;
+          e.preventDefault();
+          const factor = Math.pow(1.0015, -e.deltaY);
+          imagePreviewZoom = Math.min(
+            IMAGE_PREVIEW_ZOOM_MAX,
+            Math.max(IMAGE_PREVIEW_ZOOM_MIN, imagePreviewZoom * factor),
+          );
+          applyImagePreviewZoom();
+        },
+        { passive: false },
+      );
     }
 
     function initTaskDetailDblClick() {
