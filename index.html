@@ -284,20 +284,46 @@
       text-transform: none;
     }
 
-    .sidebar h2.section-heading {
+    .sidebar .schedule-block.queue-block,
+    .sidebar .schedule-block.completed-block {
       margin-top: 20px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
     }
 
-    .sidebar h2.running-heading {
+    .sidebar .schedule-block.running-block {
       margin-top: 0;
       padding-top: 0;
-      border-top: none;
+    }
+
+    .sidebar .schedule-block h2 {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0 20px 8px;
+    }
+
+    .sidebar .schedule-block .empty-list {
+      padding-top: 0;
+      padding-bottom: 8px;
     }
 
     .task-item.running-item.active {
       border-left-color: var(--ink);
+    }
+
+    .task-item .schedule-tag {
+      display: inline-block;
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .task-item.running-item .schedule-tag {
+      color: var(--ink);
     }
 
     .task-list { list-style: none; }
@@ -819,15 +845,21 @@
 
     <div class="layout" id="layout">
       <aside class="sidebar">
-        <h2 class="running-heading"><span data-i18n="sidebar.running">正在处理</span> · <span id="runningCount">0</span></h2>
-        <ul class="task-list" id="runningList"></ul>
-        <p class="empty-list hidden" id="emptyRunning"></p>
-        <h2 class="section-heading"><span data-i18n="sidebar.queued">排队中</span> · <span id="queueCount">0</span></h2>
-        <ul class="task-list" id="queueList"></ul>
-        <p class="empty-list hidden" id="emptyQueue"></p>
-        <h2 class="section-heading history-heading"><span data-i18n="sidebar.completed">已完成</span> · <span id="historyCount">0</span></h2>
-        <ul class="task-list" id="historyList"></ul>
-        <p class="empty-list hidden" id="emptyHistory"></p>
+        <div class="schedule-block running-block" id="runningBlock">
+          <h2><span data-i18n="sidebar.running">正在处理</span> · <span id="runningCount">0</span></h2>
+          <p class="empty-list hidden" id="emptyRunning"></p>
+          <ul class="task-list" id="runningList"></ul>
+        </div>
+        <div class="schedule-block queue-block" id="queueBlock">
+          <h2><span data-i18n="sidebar.queued">排队中</span> · <span id="queueCount">0</span></h2>
+          <p class="empty-list hidden" id="emptyQueue"></p>
+          <ul class="task-list" id="queueList"></ul>
+        </div>
+        <div class="schedule-block completed-block" id="completedBlock">
+          <h2><span data-i18n="sidebar.completed">已完成</span> · <span id="historyCount">0</span></h2>
+          <p class="empty-list hidden" id="emptyHistory"></p>
+          <ul class="task-list" id="historyList"></ul>
+        </div>
       </aside>
       <div
         class="sidebar-resizer"
@@ -980,7 +1012,7 @@
           running: '正在处理',
           queued: '排队中',
           completed: '已完成',
-          emptyRunning: '暂无 · 按 {kbd} 切换任务',
+          emptyRunning: '空闲 · 点选排队任务或按 {kbd} 切换',
           emptyQueue: '暂无排队任务',
           emptyHistory: '暂无完成记录',
           resizerLabel: '拖动调整列表宽度',
@@ -1135,7 +1167,7 @@
           running: 'Running',
           queued: 'Queued',
           completed: 'Completed',
-          emptyRunning: 'None running · {kbd} Switch',
+          emptyRunning: 'Idle · pick from queue or {kbd} Switch',
           emptyQueue: 'No queued tasks',
           emptyHistory: 'No completed tasks',
           resizerLabel: 'Drag to resize list',
@@ -1348,42 +1380,67 @@
     }
 
     function resolveRunningTaskId() {
+      const running = tasks.find((t) => t.scheduleState === 'running');
+      if (running) return running.id;
       const id = getRunningTaskId();
       return id && tasks.some((t) => t.id === id) ? id : null;
     }
 
-    /** 保证有且仅有一个「正在处理」；无则取最近更新的活动任务 */
-    function ensureRunningTaskId() {
-      const existing = resolveRunningTaskId();
-      if (existing) return existing;
-      if (!tasks.length) {
-        setRunningTaskId(null);
-        return null;
-      }
-      const pick = [...tasks].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
-      setRunningTaskId(pick.id);
-      return pick.id;
+    function syncRunningTaskIdFromTasks() {
+      const running = tasks.find((t) => t.scheduleState === 'running');
+      setRunningTaskId(running ? running.id : null);
+    }
+
+    function demoteAllRunning() {
+      tasks.forEach((t) => {
+        if (t.scheduleState === 'running') t.scheduleState = 'queued';
+      });
     }
 
     function scheduleTaskAsRunning(id) {
-      if (!tasks.some((t) => t.id === id)) return;
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+      demoteAllRunning();
+      task.scheduleState = 'running';
       setRunningTaskId(id);
     }
 
     function isTaskRunning(id) {
-      return !!id && id === ensureRunningTaskId();
+      if (!id) return false;
+      const running = tasks.find((t) => t.scheduleState === 'running');
+      return running ? running.id === id : resolveRunningTaskId() === id;
     }
 
     function getQueuedTasks() {
-      const rid = ensureRunningTaskId();
-      return [...tasks]
-        .filter((t) => t.id !== rid)
+      return tasks
+        .filter((t) => t.scheduleState !== 'running')
         .sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
     }
 
     function getRunningTask() {
-      const rid = ensureRunningTaskId();
-      return rid ? tasks.find((t) => t.id === rid) || null : null;
+      return tasks.find((t) => t.scheduleState === 'running') || null;
+    }
+
+    /** 从 runningTaskId / 旧数据迁移 scheduleState；不强行指定正在处理（允许 CPU 空闲） */
+    function migrateScheduleStates() {
+      const legacyId = getRunningTaskId();
+      tasks.forEach((t) => {
+        if (t.scheduleState !== 'running' && t.scheduleState !== 'queued') {
+          t.scheduleState = legacyId && t.id === legacyId ? 'running' : 'queued';
+        }
+      });
+      const runnings = tasks.filter((t) => t.scheduleState === 'running');
+      if (runnings.length > 1) {
+        const keep = resolveRunningTaskId() || runnings[0].id;
+        runnings.forEach((t) => {
+          if (t.id !== keep) t.scheduleState = 'queued';
+        });
+      }
+      if (!getRunningTask() && legacyId) {
+        const t = tasks.find((x) => x.id === legacyId);
+        if (t && runnings.length === 0) t.scheduleState = 'running';
+      }
+      syncRunningTaskIdFromTasks();
     }
 
     function taskScheduleBadge(task, fromHistory) {
@@ -1685,6 +1742,7 @@
         parkedAt: raw.parkedAt || raw.updatedAt || new Date().toISOString(),
         updatedAt: raw.updatedAt || raw.parkedAt || new Date().toISOString(),
         completedAt: raw.completedAt || null,
+        scheduleState: raw.scheduleState === 'running' ? 'running' : 'queued',
       };
     }
 
@@ -1994,7 +2052,7 @@
         applySettingsFromStored(null);
         toast(t('toast.loadFailed'));
       }
-      ensureRunningTaskId();
+      migrateScheduleStates();
     }
 
     async function persistData() {
@@ -2491,7 +2549,13 @@
       const metaTime = listKind === 'history' ? task.completedAt : task.parkedAt;
       const metaKey = listKind === 'history' ? 'sidebar.metaDone' : 'sidebar.metaParked';
       const dataKind = listKind === 'history' ? 'history' : 'active';
+      const tagKey =
+        listKind === 'history' ? null : listKind === 'running' ? 'sidebar.running' : 'sidebar.queued';
+      const tag = tagKey
+        ? `<div class="schedule-tag">${escapeHtml(t(tagKey))}</div>`
+        : '';
       return `<li class="task-item${extraClass}${active}" data-id="${task.id}" data-kind="${dataKind}">
+          ${tag}
           <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
           <div class="meta">${escapeHtml(tf(metaKey, { time: formatRelative(metaTime) }))}</div>
           ${next}
@@ -2588,6 +2652,7 @@
           ...payload,
           parkedAt: now,
           updatedAt: now,
+          scheduleState: 'queued',
         });
         $('#taskId').value = id;
         selectedId = id;
@@ -3074,13 +3139,10 @@
       if (idx < 0) return;
       const task = tasks[idx];
       const now = new Date().toISOString();
-      const wasRunning = resolveRunningTaskId() === id;
+      const wasRunning = task.scheduleState === 'running';
       history.unshift({ ...task, completedAt: now, updatedAt: now });
       tasks.splice(idx, 1);
-      if (wasRunning) {
-        const next = [...tasks].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
-        setRunningTaskId(next?.id || null);
-      }
+      if (wasRunning) syncRunningTaskIdFromTasks();
       await save();
       selectedFromHistory = true;
       selectedId = task.id;
@@ -3095,7 +3157,7 @@
       const task = history[idx];
       const now = new Date().toISOString();
       const { completedAt, ...rest } = task;
-      const restored = { ...rest, parkedAt: now, updatedAt: now };
+      const restored = { ...rest, parkedAt: now, updatedAt: now, scheduleState: 'queued' };
       tasks.push(restored);
       history.splice(idx, 1);
       await save();
@@ -3136,7 +3198,7 @@
           ids.add(t.id);
         }
       });
-      ensureRunningTaskId();
+      migrateScheduleStates();
     }
 
     function replaceImported(data) {
@@ -3151,7 +3213,7 @@
       } else {
         applySettingsFromStored(null);
       }
-      ensureRunningTaskId();
+      migrateScheduleStates();
       applyLocale();
     }
 
