@@ -284,10 +284,20 @@
       text-transform: none;
     }
 
-    .sidebar h2.history-heading {
+    .sidebar h2.section-heading {
       margin-top: 20px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
+    }
+
+    .sidebar h2.running-heading {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .task-item.running-item.active {
+      border-left-color: var(--ink);
     }
 
     .task-list { list-style: none; }
@@ -359,6 +369,11 @@
     }
 
     .task-detail .badge.done { color: var(--muted); }
+
+    .task-detail .badge.running {
+      color: var(--ink);
+      font-weight: 500;
+    }
 
     .task-detail #title.task-title {
       font-size: 1.375rem;
@@ -804,10 +819,13 @@
 
     <div class="layout" id="layout">
       <aside class="sidebar">
-        <h2><span data-i18n="sidebar.parked">封存</span> · <span id="taskCount">0</span></h2>
-        <ul class="task-list" id="taskList"></ul>
-        <p class="empty-list hidden" id="emptyList"></p>
-        <h2 class="history-heading"><span data-i18n="sidebar.completed">完成</span> · <span id="historyCount">0</span></h2>
+        <h2 class="running-heading"><span data-i18n="sidebar.running">正在处理</span> · <span id="runningCount">0</span></h2>
+        <ul class="task-list" id="runningList"></ul>
+        <p class="empty-list hidden" id="emptyRunning"></p>
+        <h2 class="section-heading"><span data-i18n="sidebar.queued">排队中</span> · <span id="queueCount">0</span></h2>
+        <ul class="task-list" id="queueList"></ul>
+        <p class="empty-list hidden" id="emptyQueue"></p>
+        <h2 class="section-heading history-heading"><span data-i18n="sidebar.completed">已完成</span> · <span id="historyCount">0</span></h2>
         <ul class="task-list" id="historyList"></ul>
         <p class="empty-list hidden" id="emptyHistory"></p>
       </aside>
@@ -823,13 +841,13 @@
       <main class="main" id="mainPanel">
         <section class="welcome" id="welcomeView">
           <h2 data-i18n="welcome.title">选择任务</h2>
-          <p class="welcome-lead" data-i18n="welcome.lead">在左侧列表点选封存，恢复上次的工作上下文。</p>
+          <p class="welcome-lead" data-i18n="welcome.lead">在左侧选择正在处理或排队中的任务，恢复工作上下文。</p>
           <p class="welcome-hint" id="welcomeHint"></p>
         </section>
         <section class="task-detail hidden" id="taskDetailView">
           <form id="taskForm">
             <input type="hidden" id="taskId" />
-            <span class="badge hidden" id="detailBadge">封存中</span>
+            <span class="badge hidden" id="detailBadge">正在处理</span>
             <section class="task-section task-section-title" data-field="title">
               <h3 class="title-label" data-i18n-field="title">任务名称</h3>
               <div
@@ -959,18 +977,20 @@
           switchTitle: '切换任务 (N)',
         },
         sidebar: {
-          parked: '封存',
-          completed: '完成',
-          emptyParked: '暂无 · 按 {kbd} 切换',
+          running: '正在处理',
+          queued: '排队中',
+          completed: '已完成',
+          emptyRunning: '暂无 · 按 {kbd} 切换任务',
+          emptyQueue: '暂无排队任务',
           emptyHistory: '暂无完成记录',
           resizerLabel: '拖动调整列表宽度',
-          metaParked: '封存于 {time}',
+          metaParked: '入队于 {time}',
           metaDone: '完成于 {time}',
         },
         welcome: {
           title: '选择任务',
-          lead: '在左侧列表点选封存，恢复上次的工作上下文。',
-          hint: '需要切换任务时，点顶部 <strong>切换</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；语言、外观与摘要项在 <strong>设置</strong> 中配置。',
+          lead: '在左侧选择正在处理或排队中的任务，恢复工作上下文。',
+          hint: '需要切换任务时，点顶部 <strong>切换</strong> 或按 <kbd>N</kbd>（新任务会占用 CPU，原任务进入排队）。浏览页可一键复制 Agent 提示词；语言、外观与摘要项在 <strong>设置</strong> 中配置。',
         },
         fields: {
           title: '任务名称',
@@ -990,7 +1010,7 @@
           blockers: '阻塞或待确认项',
           notes: '时限、风险、备忘',
         },
-        badge: { parked: '封存中', done: '已完成' },
+        badge: { running: '正在处理', queued: '排队中', done: '已完成' },
         actions: {
           edit: '编辑',
           save: '保存',
@@ -1029,11 +1049,11 @@
           title: '导入数据',
           merge: '合并到现有',
           replace: '覆盖现有',
-          message: '将导入 {tasks} 条封存、{history} 条历史（共 {total} 条）。请选择：',
+          message: '将导入 {tasks} 条活动任务、{history} 条已完成（共 {total} 条）。请选择：',
         },
         confirm: {
           markDoneTitle: '标记完成',
-          markDoneMsg: '移入「已完成」历史？可随时查看或恢复为封存。',
+          markDoneMsg: '移入「已完成」？可随时查看或恢复为排队任务。',
           deleteTitle: '永久删除',
           deleteMsg: '从完成历史中彻底删除？',
         },
@@ -1058,11 +1078,12 @@
           copyFailed: '复制失败，请手动选择',
           needTitle: '请填写任务名称',
           saved: '已保存',
-          parked: '已封存',
+          parked: '已入队',
+          running: '已开始处理',
           copiedAgent: '已复制 Agent 提示词',
           copiedSummary: '已复制摘要',
           movedToHistory: '已移入完成历史',
-          restored: '已恢复为封存任务',
+          restored: '已恢复并开始处理',
           deletedHistory: '已从历史删除',
           exported: '已导出 JSON',
           importOk: '导入成功',
@@ -1111,18 +1132,20 @@
           switchTitle: 'Switch (N)',
         },
         sidebar: {
-          parked: 'Parked',
-          completed: 'Done',
-          emptyParked: 'None yet · {kbd} Switch',
+          running: 'Running',
+          queued: 'Queued',
+          completed: 'Completed',
+          emptyRunning: 'None running · {kbd} Switch',
+          emptyQueue: 'No queued tasks',
           emptyHistory: 'No completed tasks',
           resizerLabel: 'Drag to resize list',
-          metaParked: 'Parked {time}',
+          metaParked: 'Queued {time}',
           metaDone: 'Done {time}',
         },
         welcome: {
           title: 'Pick a task',
-          lead: 'Select a parked task on the left to restore your last context.',
-          hint: 'To switch tasks, click <strong>Switch</strong> or press <kbd>N</kbd>. Copy an Agent prompt from the task view; set language, appearance, and summary fields in <strong>Settings</strong>.',
+          lead: 'Select a running or queued task on the left to restore your context.',
+          hint: 'To switch tasks, click <strong>Switch</strong> or press <kbd>N</kbd> (new task runs; the previous one is queued). Copy an Agent prompt from the task view; set language, appearance, and summary fields in <strong>Settings</strong>.',
         },
         fields: {
           title: 'Task name',
@@ -1142,7 +1165,7 @@
           blockers: 'Blockers or open questions',
           notes: 'Deadlines, risks, notes',
         },
-        badge: { parked: 'Parked', done: 'Done' },
+        badge: { running: 'Running', queued: 'Queued', done: 'Done' },
         actions: {
           edit: 'Edit',
           save: 'Save',
@@ -1181,11 +1204,11 @@
           title: 'Import data',
           merge: 'Merge',
           replace: 'Replace all',
-          message: 'Import {tasks} parked and {history} completed ({total} total). Choose:',
+          message: 'Import {tasks} active and {history} completed ({total} total). Choose:',
         },
         confirm: {
           markDoneTitle: 'Mark done',
-          markDoneMsg: 'Move to completed history? You can view or restore to parked later.',
+          markDoneMsg: 'Move to completed? You can view or restore to the queue later.',
           deleteTitle: 'Delete permanently',
           deleteMsg: 'Remove from completed history forever?',
         },
@@ -1210,11 +1233,12 @@
           copyFailed: 'Copy failed — select manually',
           needTitle: 'Enter a task name',
           saved: 'Saved',
-          parked: 'Parked',
+          parked: 'Queued',
+          running: 'Now running',
           copiedAgent: 'Agent prompt copied',
           copiedSummary: 'Summary copied',
           movedToHistory: 'Moved to completed',
-          restored: 'Restored to parked',
+          restored: 'Restored and running',
           deletedHistory: 'Removed from history',
           exported: 'JSON exported',
           importOk: 'Import complete',
@@ -1287,6 +1311,7 @@
     const appSettings = {
       summaryInclude: { ...DEFAULT_SUMMARY_INCLUDE },
       locale: DEFAULT_LOCALE,
+      runningTaskId: null,
     };
 
     const RICH_FIELDS = ['goal', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
@@ -1309,6 +1334,62 @@
       appSettings.summaryInclude = normalizeSummaryIncludeSlice(settingsRoot?.summaryInclude);
       currentLocale = normalizeLocale(settingsRoot?.locale ?? appSettings.locale);
       appSettings.locale = currentLocale;
+      const rid = settingsRoot?.runningTaskId;
+      appSettings.runningTaskId = typeof rid === 'string' && rid ? rid : null;
+    }
+
+    function getRunningTaskId() {
+      const id = appSettings.runningTaskId;
+      return typeof id === 'string' && id ? id : null;
+    }
+
+    function setRunningTaskId(id) {
+      appSettings.runningTaskId = id || null;
+    }
+
+    function resolveRunningTaskId() {
+      const id = getRunningTaskId();
+      return id && tasks.some((t) => t.id === id) ? id : null;
+    }
+
+    /** 保证有且仅有一个「正在处理」；无则取最近更新的活动任务 */
+    function ensureRunningTaskId() {
+      const existing = resolveRunningTaskId();
+      if (existing) return existing;
+      if (!tasks.length) {
+        setRunningTaskId(null);
+        return null;
+      }
+      const pick = [...tasks].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+      setRunningTaskId(pick.id);
+      return pick.id;
+    }
+
+    function scheduleTaskAsRunning(id) {
+      if (!tasks.some((t) => t.id === id)) return;
+      setRunningTaskId(id);
+    }
+
+    function isTaskRunning(id) {
+      return !!id && id === ensureRunningTaskId();
+    }
+
+    function getQueuedTasks() {
+      const rid = ensureRunningTaskId();
+      return [...tasks]
+        .filter((t) => t.id !== rid)
+        .sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
+    }
+
+    function getRunningTask() {
+      const rid = ensureRunningTaskId();
+      return rid ? tasks.find((t) => t.id === rid) || null : null;
+    }
+
+    function taskScheduleBadge(task, fromHistory) {
+      if (fromHistory) return { text: t('badge.done'), className: 'badge done' };
+      if (isTaskRunning(task.id)) return { text: t('badge.running'), className: 'badge running' };
+      return { text: t('badge.queued'), className: 'badge queued' };
     }
 
     function getSummaryInclude() {
@@ -1401,10 +1482,12 @@
       const welcomeHint = $('#welcomeHint');
       if (welcomeHint) welcomeHint.innerHTML = t('welcome.hint');
 
-      const emptyList = $('#emptyList');
-      if (emptyList) {
-        emptyList.innerHTML = tf('sidebar.emptyParked', { kbd: '<span class="kbd">N</span>' });
+      const emptyRunning = $('#emptyRunning');
+      if (emptyRunning) {
+        emptyRunning.innerHTML = tf('sidebar.emptyRunning', { kbd: '<span class="kbd">N</span>' });
       }
+      const emptyQueue = $('#emptyQueue');
+      if (emptyQueue) emptyQueue.textContent = t('sidebar.emptyQueue');
       const emptyHistory = $('#emptyHistory');
       if (emptyHistory) emptyHistory.textContent = t('sidebar.emptyHistory');
 
@@ -1427,7 +1510,9 @@
         if (tsk) {
           const badge = $('#detailBadge');
           if (badge && !badge.classList.contains('hidden')) {
-            badge.textContent = selectedFromHistory ? t('badge.done') : t('badge.parked');
+            const b = taskScheduleBadge(tsk, selectedFromHistory);
+            badge.textContent = b.text;
+            badge.className = b.className;
           }
           const meta = $('#detailMeta');
           if (meta && !meta.classList.contains('hidden')) {
@@ -1581,6 +1666,7 @@
         settings: {
           summaryInclude: { ...getSummaryInclude() },
           locale: getLocale(),
+          runningTaskId: getRunningTaskId(),
         },
       };
     }
@@ -1908,6 +1994,7 @@
         applySettingsFromStored(null);
         toast(t('toast.loadFailed'));
       }
+      ensureRunningTaskId();
     }
 
     async function persistData() {
@@ -2396,33 +2483,57 @@
       }
     }
 
-    function renderList() {
-      const sorted = [...tasks].sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
-      $('#taskCount').textContent = sorted.length;
-      $('#emptyList').classList.toggle('hidden', sorted.length > 0);
-
-      $('#taskList').innerHTML = sorted.map((t) => {
-        const active = !selectedFromHistory && t.id === selectedId ? ' active' : '';
-        const nextPlain = listPreviewText(t.nextAction);
-        const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
-        return `<li class="task-item${active}" data-id="${t.id}" data-kind="active">
-          <div class="title">${escapeHtml(listPreviewText(t.title))}</div>
-          <div class="meta">${escapeHtml(tf('sidebar.metaParked', { time: formatRelative(t.parkedAt) }))}</div>
+    function renderTaskListItem(task, { listKind, active }) {
+      const nextPlain = listPreviewText(task.nextAction);
+      const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
+      const extraClass =
+        listKind === 'history' ? ' history-item' : listKind === 'running' ? ' running-item' : ' queued-item';
+      const metaTime = listKind === 'history' ? task.completedAt : task.parkedAt;
+      const metaKey = listKind === 'history' ? 'sidebar.metaDone' : 'sidebar.metaParked';
+      const dataKind = listKind === 'history' ? 'history' : 'active';
+      return `<li class="task-item${extraClass}${active}" data-id="${task.id}" data-kind="${dataKind}">
+          <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
+          <div class="meta">${escapeHtml(tf(metaKey, { time: formatRelative(metaTime) }))}</div>
           ${next}
         </li>`;
-      }).join('');
+    }
+
+    function renderList() {
+      const running = getRunningTask();
+      const queued = getQueuedTasks();
+
+      $('#runningCount').textContent = running ? '1' : '0';
+      $('#emptyRunning').classList.toggle('hidden', !!running);
+      $('#runningList').innerHTML = running
+        ? renderTaskListItem(running, {
+            listKind: 'running',
+            active: !selectedFromHistory && running.id === selectedId,
+          })
+        : '';
+
+      $('#queueCount').textContent = queued.length;
+      $('#emptyQueue').classList.toggle('hidden', queued.length > 0);
+      $('#queueList').innerHTML = queued
+        .map((tsk) =>
+          renderTaskListItem(tsk, {
+            listKind: 'queued',
+            active: !selectedFromHistory && tsk.id === selectedId,
+          }),
+        )
+        .join('');
 
       const histSorted = [...history].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
       $('#historyCount').textContent = histSorted.length;
       $('#emptyHistory').classList.toggle('hidden', histSorted.length > 0);
 
-      $('#historyList').innerHTML = histSorted.map((t) => {
-        const active = selectedFromHistory && t.id === selectedId ? ' active' : '';
-        return `<li class="task-item history-item${active}" data-id="${t.id}" data-kind="history">
-          <div class="title">${escapeHtml(t.title)}</div>
-          <div class="meta">${escapeHtml(tf('sidebar.metaDone', { time: formatRelative(t.completedAt) }))}</div>
-        </li>`;
-      }).join('');
+      $('#historyList').innerHTML = histSorted
+        .map((tsk) =>
+          renderTaskListItem(tsk, {
+            listKind: 'history',
+            active: selectedFromHistory && tsk.id === selectedId,
+          }),
+        )
+        .join('');
 
       document.querySelectorAll('.task-item').forEach((el) => {
         el.addEventListener('click', () => {
@@ -2482,11 +2593,14 @@
         selectedId = id;
         selectedFromHistory = false;
         editingId = id;
+        scheduleTaskAsRunning(id);
       }
       try {
         await save();
         renderList();
-        if (!silent) toast(existingId ? t('toast.saved') : t('toast.parked'));
+        if (!silent) {
+          toast(existingId ? t('toast.saved') : t('toast.running'));
+        }
         return { ok: true, id: selectedId };
       } catch {
         return { ok: false };
@@ -2538,13 +2652,9 @@
       const skip = { skipLinkify: true };
       RICH_FIELDS.forEach((id) => setRichValue(id, task[id] || '', skip));
       const badge = $('#detailBadge');
-      if (fromHistory) {
-        badge.textContent = t('badge.done');
-        badge.className = 'badge done';
-      } else {
-        badge.textContent = t('badge.parked');
-        badge.className = 'badge';
-      }
+      const b = taskScheduleBadge(task, fromHistory);
+      badge.textContent = b.text;
+      badge.className = b.className;
       badge.classList.remove('hidden');
       const meta = $('#detailMeta');
       meta.textContent = formatParkedTimeLine(task, fromHistory);
@@ -2675,6 +2785,7 @@
     }
 
     function selectActiveResume(id) {
+      scheduleTaskAsRunning(id);
       selectedId = id;
       selectedFromHistory = false;
       editingId = null;
@@ -2963,8 +3074,13 @@
       if (idx < 0) return;
       const task = tasks[idx];
       const now = new Date().toISOString();
+      const wasRunning = resolveRunningTaskId() === id;
       history.unshift({ ...task, completedAt: now, updatedAt: now });
       tasks.splice(idx, 1);
+      if (wasRunning) {
+        const next = [...tasks].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+        setRunningTaskId(next?.id || null);
+      }
       await save();
       selectedFromHistory = true;
       selectedId = task.id;
@@ -2979,13 +3095,14 @@
       const task = history[idx];
       const now = new Date().toISOString();
       const { completedAt, ...rest } = task;
-      tasks.push({ ...rest, parkedAt: now, updatedAt: now });
+      const restored = { ...rest, parkedAt: now, updatedAt: now };
+      tasks.push(restored);
       history.splice(idx, 1);
       await save();
       selectedFromHistory = false;
-      selectedId = task.id;
+      selectedId = restored.id;
       renderList();
-      selectActiveResume(task.id);
+      selectActiveResume(restored.id);
       toast(t('toast.restored'));
     }
 
@@ -3019,6 +3136,7 @@
           ids.add(t.id);
         }
       });
+      ensureRunningTaskId();
     }
 
     function replaceImported(data) {
@@ -3033,6 +3151,7 @@
       } else {
         applySettingsFromStored(null);
       }
+      ensureRunningTaskId();
       applyLocale();
     }
 
