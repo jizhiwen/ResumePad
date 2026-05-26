@@ -5,6 +5,7 @@
       "id": "demo-active-001",
       "title": "ResumePad：导入示例与功能展示",
       "goal": "验证 JSON 导入/合并是否正常，并覆盖主要 UI 场景（空字段、换行、富文本、链接）。",
+      "srs": "必须支持：导入/导出 JSON；任务字段含 SRS；Agent 与摘要复制含 SRS 段落。\n验收：导入本文件后可见 SRS 区块且复制 Agent 提示词含【软件需求 SRS】。",
       "progress": "README 与 dummy.json 已准备。\n侧栏列表应显示多行预览，不出现 <div> 等标签字样。",
       "nextAction": "在浏览器打开 index.html → 导入本文件 → 逐条点选封存查看预览与编辑。",
       "references": "/home/you/src/ResumePad\nbranch: main\ndummy.json — 示例数据",
