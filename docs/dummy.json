@@ -51,7 +51,7 @@
       "nextAction": "",
       "references": "index.html — getExportPayload()",
       "blockers": "",
-      "notes": "完成历史默认保留约 14 天。",
+      "notes": "完成历史永久保留，可在已完成列表中查看或删除。",
       "parkedAt": "2026-05-10T09:00:00.000Z",
       "updatedAt": "2026-05-12T11:20:00.000Z",
       "completedAt": "2026-05-12T11:20:00.000Z"

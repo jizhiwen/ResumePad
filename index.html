@@ -284,16 +284,15 @@
       text-transform: none;
     }
 
-    .sidebar .schedule-block.queue-block,
+    .sidebar .schedule-block.queue-block {
+      margin-top: 0;
+      padding-top: 0;
+    }
+
     .sidebar .schedule-block.completed-block {
       margin-top: 20px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
-    }
-
-    .sidebar .schedule-block.running-block {
-      margin-top: 0;
-      padding-top: 0;
     }
 
     .sidebar .schedule-block h2 {
@@ -309,10 +308,6 @@
       padding-bottom: 8px;
     }
 
-    .task-item.running-item.active {
-      border-left-color: var(--ink);
-    }
-
     .task-item .schedule-tag {
       display: inline-block;
       font-size: 0.625rem;
@@ -320,10 +315,6 @@
       letter-spacing: 0.03em;
       color: var(--muted);
       margin-bottom: 2px;
-    }
-
-    .task-item.running-item .schedule-tag {
-      color: var(--ink);
     }
 
     .task-list { list-style: none; }
@@ -395,11 +386,6 @@
     }
 
     .task-detail .badge.done { color: var(--muted); }
-
-    .task-detail .badge.running {
-      color: var(--ink);
-      font-weight: 500;
-    }
 
     .task-detail #title.task-title {
       font-size: 1.375rem;
@@ -850,11 +836,6 @@
 
     <div class="layout" id="layout">
       <aside class="sidebar">
-        <div class="schedule-block running-block" id="runningBlock">
-          <h2><span data-i18n="sidebar.running">正在处理</span> · <span id="runningCount">0</span></h2>
-          <p class="empty-list hidden" id="emptyRunning"></p>
-          <ul class="task-list" id="runningList"></ul>
-        </div>
         <div class="schedule-block queue-block" id="queueBlock">
           <h2><span data-i18n="sidebar.queued">排队中</span> · <span id="queueCount">0</span></h2>
           <p class="empty-list hidden" id="emptyQueue"></p>
@@ -878,13 +859,13 @@
       <main class="main" id="mainPanel">
         <section class="welcome" id="welcomeView">
           <h2 data-i18n="welcome.title">选择任务</h2>
-          <p class="welcome-lead" data-i18n="welcome.lead">在左侧选择正在处理或排队中的任务，恢复工作上下文。</p>
+          <p class="welcome-lead" data-i18n="welcome.lead">在左侧选择排队中的任务，恢复工作上下文。</p>
           <p class="welcome-hint" id="welcomeHint"></p>
         </section>
         <section class="task-detail hidden" id="taskDetailView">
           <form id="taskForm">
             <input type="hidden" id="taskId" />
-            <span class="badge hidden" id="detailBadge">正在处理</span>
+            <span class="badge hidden" id="detailBadge">排队中</span>
             <section class="task-section task-section-title" data-field="title">
               <h3 class="title-label" data-i18n-field="title">任务名称</h3>
               <div
@@ -976,7 +957,6 @@
     const DB_VERSION = 1;
     const STORE = 'kv';
     const DATA_KEY = 'data';
-    const HISTORY_RETENTION_DAYS = 14;
     const DATA_VERSION = 3;
     const MAX_IMAGE_WIDTH = 1280;
     /** 旧版仅存 localStorage；启动时迁入 IndexedDB settings */
@@ -1019,11 +999,9 @@
           switchTitle: '切换任务 (N)',
         },
         sidebar: {
-          running: '正在处理',
           queued: '排队中',
           completed: '已完成',
-          emptyRunning: '空闲 · 点选排队任务或按 {kbd} 切换',
-          emptyQueue: '暂无排队任务',
+          emptyQueue: '暂无任务 · 按 {kbd} 新建',
           emptyHistory: '暂无完成记录',
           resizerLabel: '拖动调整列表宽度',
           metaParked: '入队于 {time}',
@@ -1031,8 +1009,8 @@
         },
         welcome: {
           title: '选择任务',
-          lead: '在左侧选择正在处理或排队中的任务，恢复工作上下文。',
-          hint: '需要切换任务时，点顶部 <strong>切换</strong> 或按 <kbd>N</kbd>（新任务会占用 CPU，原任务进入排队）。浏览页可一键复制 Agent 提示词；语言、外观与摘要项在 <strong>设置</strong> 中配置。',
+          lead: '在左侧选择排队中的任务，恢复工作上下文。',
+          hint: '需要新建任务时，点顶部 <strong>切换</strong> 或按 <kbd>N</kbd>。浏览页可一键复制 Agent 提示词；语言、外观与摘要项在 <strong>设置</strong> 中配置。',
         },
         fields: {
           title: '任务名称',
@@ -1054,7 +1032,7 @@
           blockers: '阻塞或待确认项',
           notes: '时限、风险、备忘',
         },
-        badge: { running: '正在处理', queued: '排队中', done: '已完成' },
+        badge: { queued: '排队中', done: '已完成' },
         actions: {
           edit: '编辑',
           save: '保存',
@@ -1118,17 +1096,16 @@
           imageFailed: '图片读取失败',
           migratedIdb: '已从 localStorage 迁移到 IndexedDB',
           loadFailed: '读取数据失败，已重置为空',
-          quotaExceeded: '存储空间不足，请导出备份；已完成记录仅保留最近两周',
+          quotaExceeded: '存储空间不足，请导出 JSON 备份',
           saveFailed: '保存失败：{msg}',
           copyFailed: '复制失败，请手动选择',
           needTitle: '请填写任务名称',
           saved: '已保存',
           parked: '已入队',
-          running: '已开始处理',
           copiedAgent: '已复制 Agent 提示词',
           copiedSummary: '已复制摘要',
           movedToHistory: '已移入完成历史',
-          restored: '已恢复并开始处理',
+          restored: '已恢复到排队',
           deletedHistory: '已从历史删除',
           exported: '已导出 JSON',
           importOk: '导入成功',
@@ -1179,11 +1156,9 @@
           switchTitle: 'Switch (N)',
         },
         sidebar: {
-          running: 'Running',
           queued: 'Queued',
           completed: 'Completed',
-          emptyRunning: 'Idle · pick from queue or {kbd} Switch',
-          emptyQueue: 'No queued tasks',
+          emptyQueue: 'No tasks · press {kbd} to add',
           emptyHistory: 'No completed tasks',
           resizerLabel: 'Drag to resize list',
           metaParked: 'Queued {time}',
@@ -1191,8 +1166,8 @@
         },
         welcome: {
           title: 'Pick a task',
-          lead: 'Select a running or queued task on the left to restore your context.',
-          hint: 'To switch tasks, click <strong>Switch</strong> or press <kbd>N</kbd> (new task runs; the previous one is queued). Copy an Agent prompt from the task view; set language, appearance, and summary fields in <strong>Settings</strong>.',
+          lead: 'Select a queued task on the left to restore your context.',
+          hint: 'To add a task, click <strong>Switch</strong> or press <kbd>N</kbd>. Copy an Agent prompt from the task view; set language, appearance, and summary fields in <strong>Settings</strong>.',
         },
         fields: {
           title: 'Task name',
@@ -1214,7 +1189,7 @@
           blockers: 'Blockers or open questions',
           notes: 'Deadlines, risks, notes',
         },
-        badge: { running: 'Running', queued: 'Queued', done: 'Done' },
+        badge: { queued: 'Queued', done: 'Done' },
         actions: {
           edit: 'Edit',
           save: 'Save',
@@ -1278,17 +1253,16 @@
           imageFailed: 'Could not read image',
           migratedIdb: 'Migrated from localStorage to IndexedDB',
           loadFailed: 'Could not load data; reset to empty',
-          quotaExceeded: 'Storage full — export a backup; completed tasks kept 14 days',
+          quotaExceeded: 'Storage full — export a JSON backup',
           saveFailed: 'Save failed: {msg}',
           copyFailed: 'Copy failed — select manually',
           needTitle: 'Enter a task name',
           saved: 'Saved',
           parked: 'Queued',
-          running: 'Now running',
           copiedAgent: 'Agent prompt copied',
           copiedSummary: 'Summary copied',
           movedToHistory: 'Moved to completed',
-          restored: 'Restored and running',
+          restored: 'Restored to queue',
           deletedHistory: 'Removed from history',
           exported: 'JSON exported',
           importOk: 'Import complete',
@@ -1363,7 +1337,6 @@
     const appSettings = {
       summaryInclude: { ...DEFAULT_SUMMARY_INCLUDE },
       locale: DEFAULT_LOCALE,
-      runningTaskId: null,
     };
 
     const RICH_FIELDS = ['goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
@@ -1386,86 +1359,23 @@
       appSettings.summaryInclude = normalizeSummaryIncludeSlice(settingsRoot?.summaryInclude);
       currentLocale = normalizeLocale(settingsRoot?.locale ?? appSettings.locale);
       appSettings.locale = currentLocale;
-      const rid = settingsRoot?.runningTaskId;
-      appSettings.runningTaskId = typeof rid === 'string' && rid ? rid : null;
-    }
-
-    function getRunningTaskId() {
-      const id = appSettings.runningTaskId;
-      return typeof id === 'string' && id ? id : null;
-    }
-
-    function setRunningTaskId(id) {
-      appSettings.runningTaskId = id || null;
-    }
-
-    function resolveRunningTaskId() {
-      const running = tasks.find((t) => t.scheduleState === 'running');
-      if (running) return running.id;
-      const id = getRunningTaskId();
-      return id && tasks.some((t) => t.id === id) ? id : null;
-    }
-
-    function syncRunningTaskIdFromTasks() {
-      const running = tasks.find((t) => t.scheduleState === 'running');
-      setRunningTaskId(running ? running.id : null);
-    }
-
-    function demoteAllRunning() {
-      tasks.forEach((t) => {
-        if (t.scheduleState === 'running') t.scheduleState = 'queued';
-      });
-    }
-
-    function scheduleTaskAsRunning(id) {
-      const task = tasks.find((t) => t.id === id);
-      if (!task) return;
-      demoteAllRunning();
-      task.scheduleState = 'running';
-      setRunningTaskId(id);
-    }
-
-    function isTaskRunning(id) {
-      if (!id) return false;
-      const running = tasks.find((t) => t.scheduleState === 'running');
-      return running ? running.id === id : resolveRunningTaskId() === id;
     }
 
     function getQueuedTasks() {
       return tasks
-        .filter((t) => t.scheduleState !== 'running')
+        .slice()
         .sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
     }
 
-    function getRunningTask() {
-      return tasks.find((t) => t.scheduleState === 'running') || null;
-    }
-
-    /** 从 runningTaskId / 旧数据迁移 scheduleState；不强行指定正在处理（允许 CPU 空闲） */
+    /** 旧版 running 状态一律迁移为排队 */
     function migrateScheduleStates() {
-      const legacyId = getRunningTaskId();
       tasks.forEach((t) => {
-        if (t.scheduleState !== 'running' && t.scheduleState !== 'queued') {
-          t.scheduleState = legacyId && t.id === legacyId ? 'running' : 'queued';
-        }
+        if (t.scheduleState !== 'queued') t.scheduleState = 'queued';
       });
-      const runnings = tasks.filter((t) => t.scheduleState === 'running');
-      if (runnings.length > 1) {
-        const keep = resolveRunningTaskId() || runnings[0].id;
-        runnings.forEach((t) => {
-          if (t.id !== keep) t.scheduleState = 'queued';
-        });
-      }
-      if (!getRunningTask() && legacyId) {
-        const t = tasks.find((x) => x.id === legacyId);
-        if (t && runnings.length === 0) t.scheduleState = 'running';
-      }
-      syncRunningTaskIdFromTasks();
     }
 
     function taskScheduleBadge(task, fromHistory) {
       if (fromHistory) return { text: t('badge.done'), className: 'badge done' };
-      if (isTaskRunning(task.id)) return { text: t('badge.running'), className: 'badge running' };
       return { text: t('badge.queued'), className: 'badge queued' };
     }
 
@@ -1559,12 +1469,10 @@
       const welcomeHint = $('#welcomeHint');
       if (welcomeHint) welcomeHint.innerHTML = t('welcome.hint');
 
-      const emptyRunning = $('#emptyRunning');
-      if (emptyRunning) {
-        emptyRunning.innerHTML = tf('sidebar.emptyRunning', { kbd: '<span class="kbd">N</span>' });
-      }
       const emptyQueue = $('#emptyQueue');
-      if (emptyQueue) emptyQueue.textContent = t('sidebar.emptyQueue');
+      if (emptyQueue) {
+        emptyQueue.innerHTML = tf('sidebar.emptyQueue', { kbd: '<span class="kbd">N</span>' });
+      }
       const emptyHistory = $('#emptyHistory');
       if (emptyHistory) emptyHistory.textContent = t('sidebar.emptyHistory');
 
@@ -1743,7 +1651,6 @@
         settings: {
           summaryInclude: { ...getSummaryInclude() },
           locale: getLocale(),
-          runningTaskId: getRunningTaskId(),
         },
       };
     }
@@ -1763,7 +1670,7 @@
         parkedAt: raw.parkedAt || raw.updatedAt || new Date().toISOString(),
         updatedAt: raw.updatedAt || raw.parkedAt || new Date().toISOString(),
         completedAt: raw.completedAt || null,
-        scheduleState: raw.scheduleState === 'running' ? 'running' : 'queued',
+        scheduleState: 'queued',
       };
     }
 
@@ -2008,14 +1915,6 @@
       });
     }
 
-    function pruneHistory() {
-      const cutoff = Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-      history = history.filter((t) => {
-        const when = new Date(t.completedAt || t.updatedAt || t.parkedAt).getTime();
-        return when >= cutoff;
-      });
-    }
-
     async function migrateFromLocalStorage() {
       try {
         const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -2077,7 +1976,6 @@
     }
 
     async function persistData() {
-      pruneHistory();
       const payload = getExportPayload();
       try {
         await idb.set(DATA_KEY, payload);
@@ -2567,18 +2465,11 @@
     function renderTaskListItem(task, { listKind, active }) {
       const nextPlain = listPreviewText(task.nextAction);
       const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
-      const extraClass =
-        listKind === 'history' ? ' history-item' : listKind === 'running' ? ' running-item' : ' queued-item';
+      const extraClass = listKind === 'history' ? ' history-item' : ' queued-item';
       const metaTime = listKind === 'history' ? task.completedAt : task.parkedAt;
       const metaKey = listKind === 'history' ? 'sidebar.metaDone' : 'sidebar.metaParked';
       const dataKind = listKind === 'history' ? 'history' : 'active';
-      const tagKey =
-        listKind === 'history' ? null : listKind === 'running' ? 'sidebar.running' : 'sidebar.queued';
-      const tag = tagKey
-        ? `<div class="schedule-tag">${escapeHtml(t(tagKey))}</div>`
-        : '';
       return `<li class="task-item${extraClass}${active}" data-id="${task.id}" data-kind="${dataKind}">
-          ${tag}
           <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
           <div class="meta">${escapeHtml(tf(metaKey, { time: formatRelative(metaTime) }))}</div>
           ${next}
@@ -2586,17 +2477,7 @@
     }
 
     function renderList() {
-      const running = getRunningTask();
       const queued = getQueuedTasks();
-
-      $('#runningCount').textContent = running ? '1' : '0';
-      $('#emptyRunning').classList.toggle('hidden', !!running);
-      $('#runningList').innerHTML = running
-        ? renderTaskListItem(running, {
-            listKind: 'running',
-            active: !selectedFromHistory && running.id === selectedId,
-          })
-        : '';
 
       $('#queueCount').textContent = queued.length;
       $('#emptyQueue').classList.toggle('hidden', queued.length > 0);
@@ -2682,13 +2563,12 @@
         selectedId = id;
         selectedFromHistory = false;
         editingId = id;
-        scheduleTaskAsRunning(id);
       }
       try {
         await save();
         renderList();
         if (!silent) {
-          toast(existingId ? t('toast.saved') : t('toast.running'));
+          toast(existingId ? t('toast.saved') : t('toast.parked'));
         }
         return { ok: true, id: selectedId };
       } catch {
@@ -2874,7 +2754,6 @@
     }
 
     function selectActiveResume(id) {
-      scheduleTaskAsRunning(id);
       selectedId = id;
       selectedFromHistory = false;
       editingId = null;
@@ -3163,10 +3042,8 @@
       if (idx < 0) return;
       const task = tasks[idx];
       const now = new Date().toISOString();
-      const wasRunning = task.scheduleState === 'running';
       history.unshift({ ...task, completedAt: now, updatedAt: now });
       tasks.splice(idx, 1);
-      if (wasRunning) syncRunningTaskIdFromTasks();
       await save();
       selectedFromHistory = true;
       selectedId = task.id;
@@ -3427,9 +3304,6 @@
       await load();
       applyLocale();
       initSettingsDialog();
-      const historyBefore = history.length;
-      pruneHistory();
-      if (history.length < historyBefore) await persistData();
       renderList();
       showView('welcome');
       } finally {
