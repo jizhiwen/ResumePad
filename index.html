@@ -470,8 +470,279 @@
       min-height: 5.5rem;
     }
 
-    .task-detail .task-section[data-field="srs"] .rich-input {
+    .task-detail .task-section[data-field="srs"] .rich-input,
+    .task-detail .task-section[data-field="retrospective"] .rich-input {
       min-height: 9rem;
+    }
+
+    .task-attachments {
+      margin-top: 8px;
+    }
+
+    .task-attachments-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .task-attachments-toolbar button {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--muted-surface);
+      color: var(--ink);
+    }
+
+    .task-attachments-toolbar button:hover {
+      background: var(--border);
+    }
+
+    .task-attachments-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .task-attachments-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .task-attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--muted-surface);
+    }
+
+    .task-attachment-open {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+      border: none;
+      background: transparent;
+      color: var(--ink);
+      padding: 0;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.875rem;
+    }
+
+    .task-attachment-open:hover {
+      text-decoration: underline;
+      background: transparent;
+      color: var(--accent-hover);
+    }
+
+    .task-attachment-meta {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .task-attachment-remove {
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      color: var(--muted);
+    }
+
+    .task-attachment-remove:hover {
+      color: var(--danger);
+      background: transparent;
+    }
+
+    .task-attachment-download {
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      color: var(--muted);
+    }
+
+    .task-attachment-download:hover {
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .task-attachments-empty {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      padding: 8px 12px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .attachment-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 210;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.72);
+      box-sizing: border-box;
+    }
+
+    .attachment-preview-overlay.hidden { display: none; }
+
+    .attachment-preview-panel {
+      width: min(960px, 100%);
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    .attachment-preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .attachment-preview-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attachment-preview-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .attachment-preview-mode-toggle,
+    .attachment-preview-download {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--muted-surface);
+      color: var(--ink);
+    }
+
+    .attachment-preview-mode-toggle:hover,
+    .attachment-preview-download:hover {
+      background: var(--border);
+      color: var(--ink);
+    }
+
+    .attachment-preview-close {
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      font-size: 1.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .attachment-preview-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 0;
+      background: var(--bg);
+    }
+
+    .attachment-preview-body iframe {
+      display: block;
+      width: 100%;
+      min-height: min(70vh, 640px);
+      border: none;
+      background: #fff;
+    }
+
+    .attachment-preview-markdown {
+      padding: 20px 24px 28px;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .attachment-preview-markdown h1,
+    .attachment-preview-markdown h2,
+    .attachment-preview-markdown h3 {
+      margin: 1.2em 0 0.5em;
+      line-height: 1.3;
+    }
+
+    .attachment-preview-markdown h1 { font-size: 1.375rem; }
+    .attachment-preview-markdown h2 { font-size: 1.125rem; }
+    .attachment-preview-markdown h3 { font-size: 1rem; }
+
+    .attachment-preview-markdown p { margin: 0.6em 0; }
+    .attachment-preview-markdown ul,
+    .attachment-preview-markdown ol { margin: 0.6em 0; padding-left: 1.4em; }
+    .attachment-preview-markdown code {
+      font-family: var(--mono);
+      font-size: 0.875em;
+      background: var(--muted-surface);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+
+    .attachment-preview-markdown pre {
+      margin: 0.8em 0;
+      padding: 12px;
+      overflow: auto;
+      background: var(--muted-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .attachment-preview-markdown pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .attachment-preview-markdown a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .attachment-preview-raw {
+      margin: 0;
+      padding: 16px 20px 24px;
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--ink);
+      background: var(--bg);
+      min-height: min(70vh, 640px);
+      box-sizing: border-box;
+    }
+
+    .attachment-preview-raw code {
+      font-family: inherit;
+      white-space: pre-wrap;
     }
 
     .task-detail .rich-input:focus {
@@ -904,6 +1175,21 @@
               <h3 data-i18n-field="notes">备忘</h3>
               <div id="notes" class="rich-input" contenteditable="true"></div>
             </section>
+            <section class="task-section" data-field="retrospective">
+              <h3 data-i18n-field="retrospective">复盘总结</h3>
+              <div id="retrospective" class="rich-input retrospective" contenteditable="true"></div>
+            </section>
+            <section class="task-section task-attachments-section" data-field="attachments">
+              <h3 data-i18n-field="attachments">附件</h3>
+              <div class="task-attachments" id="taskAttachments">
+                <div class="task-attachments-toolbar hidden" id="attachmentsToolbar">
+                  <button type="button" id="btnUploadAttachment" data-i18n="attachments.upload">上传附件</button>
+                  <span class="task-attachments-hint" data-i18n="attachments.hint">支持 .html / .htm / .md，单击预览</span>
+                  <input type="file" id="attachmentFile" accept=".html,.htm,.md,.markdown,text/html,text/markdown,text/plain" class="hidden" multiple />
+                </div>
+                <div id="attachmentsListHost"></div>
+              </div>
+            </section>
             <div class="detail-actions" id="detailViewActions"></div>
             <div class="detail-actions hidden" id="detailEditActions">
               <button type="submit" id="btnSaveForm" data-i18n="actions.save">保存</button>
@@ -920,6 +1206,20 @@
     <button type="button" class="image-preview-close" id="imagePreviewClose" aria-label="Close">×</button>
     <div class="image-preview-stage" id="imagePreviewStage">
       <img class="image-preview-img" id="imagePreviewImg" alt="" />
+    </div>
+  </div>
+
+  <div class="attachment-preview-overlay hidden" id="attachmentPreviewOverlay" role="dialog" aria-modal="true">
+    <div class="attachment-preview-panel">
+      <div class="attachment-preview-header">
+        <h3 id="attachmentPreviewTitle"></h3>
+        <div class="attachment-preview-header-actions">
+          <button type="button" class="attachment-preview-mode-toggle" id="attachmentPreviewModeToggle" hidden></button>
+          <button type="button" class="attachment-preview-download hidden" id="attachmentPreviewDownload" data-i18n="attachments.download">下载</button>
+          <button type="button" class="attachment-preview-close" id="attachmentPreviewClose" data-i18n-aria="attachments.closePreview" aria-label="关闭">×</button>
+        </div>
+      </div>
+      <div class="attachment-preview-body" id="attachmentPreviewBody"></div>
     </div>
   </div>
 
@@ -959,6 +1259,8 @@
     const DATA_KEY = 'data';
     const DATA_VERSION = 3;
     const MAX_IMAGE_WIDTH = 1280;
+    const MAX_ATTACHMENT_BYTES = 512 * 1024;
+    const ATTACHMENT_EXTENSIONS = new Set(['html', 'htm', 'md', 'markdown']);
     /** 旧版仅存 localStorage；启动时迁入 IndexedDB settings */
     const SUMMARY_INCLUDE_LS_KEY_LEGACY = 'resumepad_summary_include';
     /** title 始终在摘要开头；以下为摘要可选字段（保存在应用数据 settings.summaryInclude） */
@@ -970,13 +1272,15 @@
       references: true,
       blockers: true,
       notes: true,
+      retrospective: true,
       parkedAt: true,
       completedAt: true,
     };
 
     const DEFAULT_LOCALE = 'zh';
     const SUMMARY_INCLUDE_KEYS = [
-      'goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'parkedAt', 'completedAt',
+      'goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'retrospective',
+      'parkedAt', 'completedAt',
     ];
 
     const I18N = {
@@ -1021,6 +1325,8 @@
           references: '关键引用',
           blockers: '卡点 / 未决',
           notes: '备忘',
+          retrospective: '复盘总结',
+          attachments: '附件',
         },
         placeholders: {
           title: '任务名称，如：修复导出编码',
@@ -1031,6 +1337,18 @@
           references: '路径、分支、链接或命令',
           blockers: '阻塞或待确认项',
           notes: '时限、风险、备忘',
+          retrospective: '做得好的、待改进的、经验与结论（给人与 Agent 阅读）',
+        },
+        attachments: {
+          upload: '上传附件',
+          hint: '支持 .html / .htm / .md，单击预览',
+          empty: '暂无附件',
+          closePreview: '关闭预览',
+          viewRaw: '源码',
+          viewBrowse: '浏览',
+          download: '下载',
+          typeHtml: 'HTML',
+          typeMarkdown: 'Markdown',
         },
         badge: { queued: '排队中', done: '已完成' },
         actions: {
@@ -1065,6 +1383,7 @@
           references: '关键引用',
           blockers: '卡点 / 未决',
           notes: '备忘',
+          retrospective: '复盘总结',
           parkedAt: '封存时间',
           completedAt: '完成时间',
         },
@@ -1111,6 +1430,12 @@
           importOk: '导入成功',
           importBad: '导入失败：文件格式不对',
           noIdb: '浏览器不支持 IndexedDB，请升级 Edge/Chrome',
+          attachmentAdded: '附件已添加',
+          attachmentRemoved: '附件已移除',
+          attachmentBadType: '仅支持 HTML 与 Markdown 文件',
+          attachmentTooLarge: '附件过大（单文件上限 {max}）',
+          attachmentNeedSave: '请先保存任务后再上传附件',
+          attachmentDownloaded: '已开始下载附件',
         },
         agent: {
           intro: '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
@@ -1122,10 +1447,13 @@
           references: '【关键引用】',
           blockers: '【卡点 / 未决】',
           notes: '【备忘】',
+          retrospective: '【复盘总结】',
+          attachments: '【附件】',
+          attachmentsList: '{name}（{type}）',
           images: '【图片】字段内嵌 {n} 张（见 ResumePad 界面）',
           timeParked: '【时间】封存于 {full}',
           timeDone: '已完成于 {full}',
-          outro: '请先简要确认你理解的目标、软件需求（SRS）与下一步，再开始具体改动或建议。',
+          outro: '请先简要确认你理解的目标、软件需求（SRS）、复盘与下一步，再开始具体改动或建议。',
         },
         summary: {
           goal: '## 目标',
@@ -1135,6 +1463,8 @@
           references: '## 引用',
           blockers: '## 卡点',
           notes: '## 备忘',
+          retrospective: '## 复盘总结',
+          attachments: '## 附件',
         },
       },
       en: {
@@ -1178,6 +1508,8 @@
           references: 'References',
           blockers: 'Blockers',
           notes: 'Notes',
+          retrospective: 'Retrospective',
+          attachments: 'Attachments',
         },
         placeholders: {
           title: 'Task name, e.g. Fix export encoding',
@@ -1188,6 +1520,18 @@
           references: 'Paths, branches, links, commands',
           blockers: 'Blockers or open questions',
           notes: 'Deadlines, risks, notes',
+          retrospective: 'What went well, what to improve, lessons learned (for humans and agents)',
+        },
+        attachments: {
+          upload: 'Upload',
+          hint: '.html / .htm / .md — click to preview',
+          empty: 'No attachments',
+          closePreview: 'Close preview',
+          viewRaw: 'Raw',
+          viewBrowse: 'Preview',
+          download: 'Download',
+          typeHtml: 'HTML',
+          typeMarkdown: 'Markdown',
         },
         badge: { queued: 'Queued', done: 'Done' },
         actions: {
@@ -1222,6 +1566,7 @@
           references: 'References',
           blockers: 'Blockers',
           notes: 'Notes',
+          retrospective: 'Retrospective',
           parkedAt: 'Parked at',
           completedAt: 'Completed at',
         },
@@ -1268,6 +1613,12 @@
           importOk: 'Import complete',
           importBad: 'Import failed: invalid file',
           noIdb: 'IndexedDB not supported — use Edge or Chrome',
+          attachmentAdded: 'Attachment added',
+          attachmentRemoved: 'Attachment removed',
+          attachmentBadType: 'Only HTML and Markdown files are supported',
+          attachmentTooLarge: 'File too large (max {max} per file)',
+          attachmentNeedSave: 'Save the task before uploading attachments',
+          attachmentDownloaded: 'Download started',
         },
         agent: {
           intro: 'I am resuming a previously interrupted task. Use the context below and prioritize the next step.',
@@ -1279,10 +1630,13 @@
           references: '[References]',
           blockers: '[Blockers]',
           notes: '[Notes]',
+          retrospective: '[Retrospective]',
+          attachments: '[Attachments]',
+          attachmentsList: '{name} ({type})',
           images: '[Images] {n} inline in fields (see ResumePad UI)',
           timeParked: '[Time] parked {full}',
           timeDone: 'Completed {full}',
-          outro: 'Briefly confirm the goal, SRS, and next step, then proceed.',
+          outro: 'Briefly confirm the goal, SRS, retrospective, and next step, then proceed.',
         },
         summary: {
           goal: '## Goal',
@@ -1292,6 +1646,8 @@
           references: '## References',
           blockers: '## Blockers',
           notes: '## Notes',
+          retrospective: '## Retrospective',
+          attachments: '## Attachments',
         },
       },
     };
@@ -1339,7 +1695,7 @@
       locale: DEFAULT_LOCALE,
     };
 
-    const RICH_FIELDS = ['goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes'];
+    const RICH_FIELDS = ['goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'retrospective'];
     const EDIT_FIELD_ORDER = ['title', ...RICH_FIELDS];
 
     function cloneDefaultSummaryInclude() {
@@ -1599,6 +1955,9 @@
     let detailLoadedId = null;
     let detailLoadedFromHistory = false;
     let pendingImport = null;
+    let draftAttachments = [];
+    /** @type {{ att: object, mode: 'browse'|'raw' } | null} */
+    let attachmentPreviewState = null;
 
     const idb = {
       db: null,
@@ -1667,6 +2026,8 @@
         references: raw.references || '',
         blockers: raw.blockers || '',
         notes: raw.notes || '',
+        retrospective: raw.retrospective || '',
+        attachments: normalizeAttachments(raw.attachments),
         parkedAt: raw.parkedAt || raw.updatedAt || new Date().toISOString(),
         updatedAt: raw.updatedAt || raw.parkedAt || new Date().toISOString(),
         completedAt: raw.completedAt || null,
@@ -1730,6 +2091,337 @@
       const s = fieldPlain(value);
       if (!s) return '';
       return s.replace(/\n{4,}/g, '\n\n\n');
+    }
+
+    function cloneAttachments(list) {
+      return (list || []).map((a) => ({ ...a }));
+    }
+
+    function normalizeAttachments(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .filter((a) => a && typeof a.name === 'string' && typeof a.content === 'string')
+        .map((a) => ({
+          id: a.id || uid(),
+          name: String(a.name),
+          kind: a.kind === 'html' ? 'html' : 'markdown',
+          content: String(a.content),
+          uploadedAt: a.uploadedAt || new Date().toISOString(),
+        }));
+    }
+
+    function attachmentTypeLabel(kind) {
+      return kind === 'html' ? t('attachments.typeHtml') : t('attachments.typeMarkdown');
+    }
+
+    function formatBytes(n) {
+      if (n < 1024) return `${n} B`;
+      if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+      return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function getAttachmentExtension(name) {
+      const i = name.lastIndexOf('.');
+      return i >= 0 ? name.slice(i + 1).toLowerCase() : '';
+    }
+
+    function detectAttachmentKind(name, mime) {
+      const ext = getAttachmentExtension(name);
+      if (ext === 'html' || ext === 'htm') return 'html';
+      if (ext === 'md' || ext === 'markdown') return 'markdown';
+      if (mime === 'text/html') return 'html';
+      if (mime === 'text/markdown') return 'markdown';
+      return null;
+    }
+
+    function renderMarkdownBasic(md) {
+      const lines = String(md).replace(/\r\n?/g, '\n').split('\n');
+      const out = [];
+      let inPre = false;
+      let preBuf = [];
+
+      const flushPre = () => {
+        if (!preBuf.length) return;
+        out.push(`<pre><code>${escapeHtml(preBuf.join('\n'))}</code></pre>`);
+        preBuf = [];
+      };
+
+      for (const line of lines) {
+        if (line.trim().startsWith('```')) {
+          if (inPre) {
+            flushPre();
+            inPre = false;
+          } else {
+            inPre = true;
+          }
+          continue;
+        }
+        if (inPre) {
+          preBuf.push(line);
+          continue;
+        }
+        let s = escapeHtml(line);
+        if (/^###\s+/.test(s)) {
+          out.push(`<h3>${s.replace(/^###\s+/, '')}</h3>`);
+          continue;
+        }
+        if (/^##\s+/.test(s)) {
+          out.push(`<h2>${s.replace(/^##\s+/, '')}</h2>`);
+          continue;
+        }
+        if (/^#\s+/.test(s)) {
+          out.push(`<h1>${s.replace(/^#\s+/, '')}</h1>`);
+          continue;
+        }
+        s = s
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code>$1</code>')
+          .replace(
+            /\[([^\]]+)\]\(([^)]+)\)/g,
+            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+          );
+        if (!s.trim()) {
+          out.push('');
+          continue;
+        }
+        out.push(`<p>${s}</p>`);
+      }
+      flushPre();
+      return out.join('');
+    }
+
+    function attachmentMimeType(att) {
+      return att.kind === 'html' ? 'text/html;charset=utf-8' : 'text/markdown;charset=utf-8';
+    }
+
+    function safeAttachmentFileName(name) {
+      const base = String(name || 'attachment').replace(/[/\\]/g, '_').trim() || 'attachment';
+      return base;
+    }
+
+    function downloadAttachment(att) {
+      if (!att?.content) return;
+      const mime = attachmentMimeType(att);
+      const blob = new Blob([att.content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeAttachmentFileName(att.name);
+      a.rel = 'noopener';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast(t('toast.attachmentDownloaded'));
+    }
+
+    function updateAttachmentPreviewHeaderControls() {
+      const modeBtn = $('#attachmentPreviewModeToggle');
+      const dlBtn = $('#attachmentPreviewDownload');
+      if (!modeBtn || !dlBtn) return;
+      if (!attachmentPreviewState) {
+        modeBtn.hidden = true;
+        dlBtn.hidden = true;
+        return;
+      }
+      modeBtn.hidden = false;
+      dlBtn.hidden = false;
+      dlBtn.textContent = t('attachments.download');
+      dlBtn.title = dlBtn.textContent;
+      const isRaw = attachmentPreviewState.mode === 'raw';
+      modeBtn.textContent = isRaw ? t('attachments.viewBrowse') : t('attachments.viewRaw');
+      modeBtn.title = modeBtn.textContent;
+    }
+
+    function renderAttachmentPreviewContent(att, mode) {
+      const body = $('#attachmentPreviewBody');
+      if (!body || !att) return;
+      body.innerHTML = '';
+      if (mode === 'raw') {
+        const pre = document.createElement('pre');
+        pre.className = 'attachment-preview-raw';
+        const code = document.createElement('code');
+        code.textContent = att.content;
+        pre.appendChild(code);
+        body.appendChild(pre);
+        return;
+      }
+      if (att.kind === 'html') {
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('sandbox', '');
+        iframe.title = att.name;
+        iframe.srcdoc = att.content;
+        body.appendChild(iframe);
+      } else {
+        const div = document.createElement('div');
+        div.className = 'attachment-preview-markdown';
+        div.innerHTML = renderMarkdownBasic(att.content);
+        body.appendChild(div);
+      }
+    }
+
+    function updateAttachmentPreviewModeToggle() {
+      updateAttachmentPreviewHeaderControls();
+    }
+
+    function showAttachmentPreview(att) {
+      const overlay = $('#attachmentPreviewOverlay');
+      const title = $('#attachmentPreviewTitle');
+      if (!overlay || !title || !att) return;
+      attachmentPreviewState = { att, mode: 'browse' };
+      title.textContent = att.name;
+      renderAttachmentPreviewContent(att, 'browse');
+      updateAttachmentPreviewHeaderControls();
+      overlay.classList.remove('hidden');
+    }
+
+    function toggleAttachmentPreviewMode() {
+      if (!attachmentPreviewState) return;
+      attachmentPreviewState.mode =
+        attachmentPreviewState.mode === 'raw' ? 'browse' : 'raw';
+      renderAttachmentPreviewContent(
+        attachmentPreviewState.att,
+        attachmentPreviewState.mode,
+      );
+      updateAttachmentPreviewModeToggle();
+    }
+
+    function hideAttachmentPreview() {
+      attachmentPreviewState = null;
+      const overlay = $('#attachmentPreviewOverlay');
+      if (overlay) overlay.classList.add('hidden');
+      const body = $('#attachmentPreviewBody');
+      if (body) body.innerHTML = '';
+      updateAttachmentPreviewHeaderControls();
+    }
+
+    function renderAttachmentsPanel(editing) {
+      const host = $('#attachmentsListHost');
+      const toolbar = $('#attachmentsToolbar');
+      if (!host) return;
+      if (toolbar) toolbar.classList.toggle('hidden', !editing);
+
+      if (!draftAttachments.length) {
+        host.innerHTML = `<p class="task-attachments-empty">${escapeHtml(t('attachments.empty'))}</p>`;
+        return;
+      }
+
+      host.innerHTML = `<ul class="task-attachments-list">${draftAttachments
+        .map(
+          (att) => `<li class="task-attachment-item">
+          <button type="button" class="task-attachment-open" data-att-id="${escapeHtml(att.id)}">${escapeHtml(att.name)}</button>
+          <span class="task-attachment-meta">${escapeHtml(attachmentTypeLabel(att.kind))}</span>
+          <button type="button" class="task-attachment-download" data-att-id="${escapeHtml(att.id)}">${escapeHtml(t('attachments.download'))}</button>
+          ${
+            editing
+              ? `<button type="button" class="task-attachment-remove" data-att-id="${escapeHtml(att.id)}">${escapeHtml(t('actions.delete'))}</button>`
+              : ''
+          }
+        </li>`,
+        )
+        .join('')}</ul>`;
+
+      host.querySelectorAll('.task-attachment-open').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const att = draftAttachments.find((a) => a.id === btn.dataset.attId);
+          if (att) showAttachmentPreview(att);
+        });
+      });
+
+      host.querySelectorAll('.task-attachment-download').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const att = draftAttachments.find((a) => a.id === btn.dataset.attId);
+          if (att) downloadAttachment(att);
+        });
+      });
+
+      if (!editing) return;
+
+      host.querySelectorAll('.task-attachment-remove').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          draftAttachments = draftAttachments.filter((a) => a.id !== btn.dataset.attId);
+          const taskId = $('#taskId').value;
+          if (taskId) {
+            const idx = tasks.findIndex((x) => x.id === taskId);
+            if (idx >= 0) {
+              tasks[idx].attachments = cloneAttachments(draftAttachments);
+              try {
+                await save();
+              } catch {
+                return;
+              }
+            }
+          }
+          renderAttachmentsPanel(true);
+          toast(t('toast.attachmentRemoved'));
+        });
+      });
+    }
+
+    async function persistDraftAttachmentsToTask() {
+      const taskId = $('#taskId').value;
+      if (!taskId) return;
+      const idx = tasks.findIndex((x) => x.id === taskId);
+      if (idx < 0) return;
+      tasks[idx].attachments = cloneAttachments(draftAttachments);
+      await save();
+    }
+
+    async function handleAttachmentFiles(fileList) {
+      const files = [...fileList];
+      if (!files.length) return;
+      let added = 0;
+      for (const file of files) {
+        const kind = detectAttachmentKind(file.name, file.type);
+        if (!kind) {
+          toast(t('toast.attachmentBadType'));
+          continue;
+        }
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          toast(tf('toast.attachmentTooLarge', { max: formatBytes(MAX_ATTACHMENT_BYTES) }));
+          continue;
+        }
+        const content = await file.text();
+        draftAttachments.push({
+          id: uid(),
+          name: file.name,
+          kind,
+          content,
+          uploadedAt: new Date().toISOString(),
+        });
+        added += 1;
+      }
+      if (!added) return;
+      if ($('#taskId').value) {
+        try {
+          await persistDraftAttachmentsToTask();
+        } catch {
+          return;
+        }
+      }
+      renderAttachmentsPanel(isTaskEditing());
+      toast(t('toast.attachmentAdded'));
+    }
+
+    function initAttachments() {
+      $('#btnUploadAttachment')?.addEventListener('click', () => $('#attachmentFile')?.click());
+      $('#attachmentFile')?.addEventListener('change', async (e) => {
+        await handleAttachmentFiles(e.target.files);
+        e.target.value = '';
+      });
+      $('#attachmentPreviewClose')?.addEventListener('click', hideAttachmentPreview);
+      $('#attachmentPreviewModeToggle')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleAttachmentPreviewMode();
+      });
+      $('#attachmentPreviewDownload')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (attachmentPreviewState?.att) downloadAttachment(attachmentPreviewState.att);
+      });
+      $('#attachmentPreviewOverlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'attachmentPreviewOverlay') hideAttachmentPreview();
+      });
+      const panel = document.querySelector('.attachment-preview-panel');
+      panel?.addEventListener('click', (e) => e.stopPropagation());
     }
 
     function sanitizeRichHtml(html) {
@@ -2420,6 +3112,17 @@
         inc.references && task.references && `${t('summary.references')}\n${fieldPlain(task.references)}`,
         inc.blockers && task.blockers && `${t('summary.blockers')}\n${fieldPlain(task.blockers)}`,
         inc.notes && task.notes && `${t('summary.notes')}\n${fieldPlain(task.notes)}`,
+        inc.retrospective &&
+          task.retrospective &&
+          `${t('summary.retrospective')}\n${fieldPlain(task.retrospective)}`,
+        task.attachments?.length
+          ? [
+              t('summary.attachments'),
+              ...task.attachments.map(
+                (a) => `- ${a.name} (${attachmentTypeLabel(a.kind)})`,
+              ),
+            ].join('\n')
+          : '',
         '',
         inc.parkedAt && tf('time.summaryParked', { full: formatFull(task.parkedAt) }),
         inc.completedAt && task.completedAt && tf('time.summaryDone', { full: formatFull(task.completedAt) }),
@@ -2439,6 +3142,20 @@
       if (task.references) sections.push('', t('agent.references'), fieldPlain(task.references));
       if (task.blockers) sections.push('', t('agent.blockers'), fieldPlain(task.blockers));
       if (task.notes) sections.push('', t('agent.notes'), fieldPlain(task.notes));
+      if (task.retrospective) {
+        sections.push('', t('agent.retrospective'), fieldPlain(task.retrospective));
+      }
+      if (task.attachments?.length) {
+        sections.push('', t('agent.attachments'));
+        task.attachments.forEach((a) => {
+          sections.push(
+            tf('agent.attachmentsList', {
+              name: a.name,
+              type: attachmentTypeLabel(a.kind),
+            }),
+          );
+        });
+      }
       const imgCount = countInlineImages(task);
       if (imgCount) {
         sections.push('', tf('agent.images', { n: imgCount }));
@@ -2530,6 +3247,7 @@
         references: getRichValue('references'),
         blockers: getRichValue('blockers'),
         notes: getRichValue('notes'),
+        retrospective: getRichValue('retrospective'),
       };
     }
 
@@ -2546,7 +3264,12 @@
       if (existingId) {
         const idx = tasks.findIndex((x) => x.id === existingId);
         if (idx >= 0) {
-          tasks[idx] = { ...tasks[idx], ...payload, updatedAt: now };
+          tasks[idx] = {
+            ...tasks[idx],
+            ...payload,
+            attachments: cloneAttachments(draftAttachments),
+            updatedAt: now,
+          };
         }
         selectedId = existingId;
         selectedFromHistory = false;
@@ -2555,6 +3278,7 @@
         tasks.push({
           id,
           ...payload,
+          attachments: cloneAttachments(draftAttachments),
           parkedAt: now,
           updatedAt: now,
           scheduleState: 'queued',
@@ -2628,7 +3352,9 @@
       const meta = $('#detailMeta');
       meta.textContent = formatParkedTimeLine(task, fromHistory);
       meta.classList.remove('hidden');
+      draftAttachments = cloneAttachments(task.attachments);
       syncAllRichFieldEmptyStates();
+      renderAttachmentsPanel(false);
     }
 
     function clearTaskDetailForNew() {
@@ -2639,7 +3365,9 @@
       RICH_FIELDS.forEach((id) => setRichValue(id, '', skip));
       $('#detailBadge').classList.add('hidden');
       $('#detailMeta').classList.add('hidden');
+      draftAttachments = [];
       syncAllRichFieldEmptyStates();
+      renderAttachmentsPanel(true);
     }
 
     function setTaskDetailMode(editing, {
@@ -2671,6 +3399,7 @@
       });
       if (!canEdit) linkifyAllRichFormFields();
       syncAllRichFieldEmptyStates();
+      renderAttachmentsPanel(canEdit);
 
       const shouldFocus = focusField || (canEdit && isNew);
       if (!shouldFocus) return;
@@ -3019,7 +3748,11 @@
         if (selectedFromHistory || !selectedId) return;
         if ($('#taskDetailView').classList.contains('is-editing')) return;
         if (e.target.closest('.detail-actions, button, a.rich-auto-link')) return;
+        if (e.target.closest('.task-attachments-section, .task-attachment-open, .task-attachment-remove, .task-attachment-download')) {
+          return;
+        }
         const block = e.target.closest('[data-field]');
+        if (block?.dataset.field === 'attachments') return;
         if (!block) return;
         e.preventDefault();
         const fieldId = block.dataset.field;
@@ -3278,6 +4011,12 @@
         toggleTheme();
       }
       if (e.key === 'Escape') {
+        const attPreview = $('#attachmentPreviewOverlay');
+        if (attPreview && !attPreview.classList.contains('hidden')) {
+          e.preventDefault();
+          hideAttachmentPreview();
+          return;
+        }
         const preview = $('#imagePreviewOverlay');
         if (preview && !preview.classList.contains('hidden')) {
           e.preventDefault();
@@ -3295,6 +4034,7 @@
       initSidebarResize();
       initRichFields();
       initImagePreview();
+      initAttachments();
       initTaskDetailDblClick();
       if (!window.indexedDB) {
         toast(t('toast.noIdb'));

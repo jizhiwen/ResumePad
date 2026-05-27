@@ -11,6 +11,16 @@
       "references": "/home/you/src/ResumePad\nbranch: main\ndummy.json — 示例数据",
       "blockers": "",
       "notes": "导入时可选「合并到现有」或「覆盖现有」。",
+      "retrospective": "做得好的：示例数据覆盖主要字段。\n待改进：补充更多边界场景。\n结论：导入后应能预览附件与复盘区。",
+      "attachments": [
+        {
+          "id": "demo-att-001",
+          "name": "sample-notes.md",
+          "kind": "markdown",
+          "content": "# 示例 Markdown 附件\n\n- 支持列表\n- **加粗** 与 `代码`\n\n单击可在弹窗中预览。",
+          "uploadedAt": "2026-05-18T12:00:00.000Z"
+        }
+      ],
       "parkedAt": "2026-05-18T10:00:00.000Z",
       "updatedAt": "2026-05-18T14:30:00.000Z",
       "completedAt": null
