@@ -167,6 +167,13 @@ ResumePad/
 └── README.md
 ```
 
+## 待办
+
+- [ ] **macOS 代码签名与公证** — 当前 CI 构建的 `.dmg` / `.zip` 未签名、未公证，用户首次打开可能需「右键 → 打开」。后续可考虑：
+  - 加入 Apple Developer 证书（`.p12`），在 GitHub Actions 配置 Secrets：`CSC_LINK`（Base64 证书）、`CSC_KEY_PASSWORD`、`APPLE_ID`、`APPLE_APP_SPECIFIC_PASSWORD`、`APPLE_TEAM_ID`
+  - 在 `release.yml` 的 `build-macos` 中移除 `CSC_IDENTITY_AUTO_DISCOVERY: false`，启用 `electron-builder` 签名与 `notarize`（需 `afterSign` 或 `electron-builder-notarize`）
+  - 验证 Gatekeeper 与「隐私与安全性」中可正常打开，无需额外提示
+
 ## 许可与说明
 
 个人工具，按现状提供。数据安全与备份请自行负责。

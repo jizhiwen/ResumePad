@@ -167,6 +167,13 @@ ResumePad/
 └── README.md
 ```
 
+## TODO
+
+- [ ] **macOS code signing and notarization** — CI builds are currently unsigned and not notarized; users may need **right-click → Open** on first launch. Later steps could include:
+  - Apple Developer certificate (`.p12`) and GitHub Actions secrets: `CSC_LINK` (Base64 cert), `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
+  - Remove `CSC_IDENTITY_AUTO_DISCOVERY: false` in `release.yml` `build-macos`, enable `electron-builder` signing and notarization (`afterSign` or `electron-builder-notarize`)
+  - Verify Gatekeeper allows opening without extra security prompts
+
 ## License and disclaimer
 
 Personal tool, provided as-is. You are responsible for your data and backups.
