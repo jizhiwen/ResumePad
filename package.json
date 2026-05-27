@@ -20,7 +20,8 @@
     "pack": "npm run icons && npx electron-builder --dir --publish never",
     "dist": "npm run icons && npx electron-builder --publish never",
     "dist:linux": "npm run icons && npx electron-builder --linux --publish never",
-    "dist:win": "npm run icons && npx electron-builder --win --publish never"
+    "dist:win": "npm run icons && npx electron-builder --win --publish never",
+    "dist:mac": "npm run icons && npx electron-builder --mac --publish never"
   },
   "devDependencies": {
     "electron": "^33.2.1",
@@ -84,6 +85,27 @@
     },
     "portable": {
       "artifactName": "ResumePad-Portable-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "executableName": "ResumePad",
+      "darkModeSupport": true
     }
   }
 }

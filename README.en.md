@@ -4,7 +4,7 @@ English · [中文](README.md)
 
 A lightweight tool for capturing context when you switch tasks. Before you get interrupted or move on, write down the goal, progress, and next step; when you return, pick a task from the list on the left and resume within minutes.
 
-**Install only via [Electron packages](https://github.com/jizhiwen/ResumePad/releases)** (Ubuntu / Windows). Opening `index.html` in a browser or double-clicking it is not supported; there is no script-based shortcut install.
+**Install only via [Electron packages](https://github.com/jizhiwen/ResumePad/releases)** (Ubuntu / Windows / macOS). Opening `index.html` in a browser or double-clicking it is not supported; there is no script-based shortcut install.
 
 ![ResumePad screenshot](docs/screenshot-20260518-204754.png)
 
@@ -18,10 +18,14 @@ Download the package for your OS from GitHub **Releases** (CI builds and publish
 |----------|-------------|-------------|
 | **Ubuntu** | `ResumePad-*-linux-x64.AppImage` (portable; `chmod +x` then run) | `ResumePad-*-linux-x64.deb` (`sudo apt install ./ResumePad-*.deb`) |
 | **Windows** | `ResumePad-Setup-*-x64.exe` (installer) | `ResumePad-Portable-*-x64.exe` (portable) |
+| **macOS (Apple Silicon)** | `ResumePad-*-mac-arm64.dmg` | `ResumePad-*-mac-arm64.zip` (unzip and drag `.app` to Applications) |
+| **macOS (Intel)** | `ResumePad-*-mac-x64.dmg` | `ResumePad-*-mac-x64.zip` |
 
 **Ubuntu AppImage:** If it will not start, install FUSE: `sudo apt install libfuse2` (22.04) or `libfuse3` (24.04+).
 
-After install, launch **ResumePad** from the app menu or Start menu.
+**macOS:** CI builds are not notarized. If Gatekeeper blocks the app, use **right-click → Open**, or allow it under **System Settings → Privacy & Security**.
+
+After install, launch **ResumePad** from the app menu, Launchpad, or Start menu.
 
 ## Quick start
 
@@ -40,6 +44,7 @@ After install, launch **ResumePad** from the app menu or Start menu.
 |----------|------|
 | Linux | `~/.config/resumepad/` |
 | Windows | `%APPDATA%\resumepad\` |
+| macOS | `~/Library/Application Support/resumepad/` |
 
 **When created:** On first launch of the Electron app. The path is Electron’s standard `app.getPath('userData')` (matches the `name` field in `package.json`: `resumepad`). The whole directory is the Chromium user profile root.
 
@@ -119,14 +124,14 @@ The repo includes [`docs/dummy.json`](docs/dummy.json) (`version: 3`) with SRS, 
 
 ## Releasing (maintainers)
 
-Push a tag matching `v*`; GitHub Actions builds on Ubuntu and Windows and creates a Release:
+Push a tag matching `v*`; GitHub Actions builds on Ubuntu, Windows, and macOS and creates a Release:
 
 ```bash
 git tag v1.0.14
 git push origin v1.0.14
 ```
 
-Artifacts: `ResumePad-*-linux-x64.AppImage`, `.deb`, `ResumePad-Setup-*-x64.exe`, `ResumePad-Portable-*-x64.exe` (hyphenated names, no spaces).
+Artifacts: `ResumePad-*-linux-x64.AppImage`, `.deb`, `ResumePad-Setup-*-x64.exe`, `ResumePad-Portable-*-x64.exe`, `ResumePad-*-mac-arm64.dmg`, `.zip` (and `mac-x64` for Intel Macs; hyphenated names, no spaces).
 
 ## Build from source (developers)
 
@@ -139,6 +144,7 @@ Artifacts: `ResumePad-*-linux-x64.AppImage`, `.deb`, `ResumePad-Setup-*-x64.exe`
 nvm use 20
 ./scripts/build-electron.sh linux   # runs npm ci and Node version check
 ./scripts/build-electron.sh win     # Windows only (prefer windows-latest CI)
+./scripts/build-electron.sh mac     # macOS only (requires Mac or macos-latest CI)
 npm start                           # dev mode
 ```
 

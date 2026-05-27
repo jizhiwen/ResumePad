@@ -4,7 +4,7 @@
 
 任务切换时的上下文记录小工具。在被打断或换任务前，把「目标、进度、下一步」等写清楚；回来时从左侧列表点选，几分钟内接上上次的工作状态。
 
-**仅支持通过 [Electron 安装包](https://github.com/jizhiwen/ResumePad/releases) 安装使用**（Ubuntu / Windows）。不支持双击 `index.html`、浏览器直接打开，也不提供脚本安装快捷方式。
+**仅支持通过 [Electron 安装包](https://github.com/jizhiwen/ResumePad/releases) 安装使用**（Ubuntu / Windows / macOS）。不支持双击 `index.html`、浏览器直接打开，也不提供脚本安装快捷方式。
 
 ![ResumePad 界面示例](docs/screenshot-20260518-204754.png)
 
@@ -18,10 +18,14 @@
 |------|------|------|
 | **Ubuntu** | `ResumePad-*-linux-x64.AppImage`（免安装，`chmod +x` 后双击） | `ResumePad-*-linux-x64.deb`（`sudo apt install ./ResumePad-*.deb`） |
 | **Windows** | `ResumePad-Setup-*-x64.exe`（安装包） | `ResumePad-Portable-*-x64.exe`（免安装） |
+| **macOS（Apple 芯片）** | `ResumePad-*-mac-arm64.dmg` | `ResumePad-*-mac-arm64.zip`（解压后将 `.app` 拖入「应用程序」） |
+| **macOS（Intel）** | `ResumePad-*-mac-x64.dmg` | `ResumePad-*-mac-x64.zip` |
 
 **Ubuntu AppImage 提示：** 若无法运行，可安装 FUSE：`sudo apt install libfuse2`（22.04）或 `libfuse3`（24.04+）。
 
-安装后从应用菜单或开始菜单启动 **ResumePad**。
+**macOS 提示：** CI 构建的安装包未做 Apple 公证。首次打开若被拦截，请 **右键 → 打开**，或在「系统设置 → 隐私与安全性」中允许。
+
+安装后从应用菜单、启动台或开始菜单启动 **ResumePad**。
 
 ## 快速开始
 
@@ -40,6 +44,7 @@
 |------|------|
 | Linux | `~/.config/resumepad/` |
 | Windows | `%APPDATA%\resumepad\` |
+| macOS | `~/Library/Application Support/resumepad/` |
 
 **何时创建：** 首次启动 Electron 版时自动创建。路径为 Electron 标准的 `app.getPath('userData')`（与 `package.json` 的 `name` 字段一致，见 `resumepad`），整个目录作为 Chromium 用户配置根。
 
@@ -119,14 +124,14 @@ rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 
 ## 发布新版本（维护者）
 
-推送符合 `v*` 的 tag 后，GitHub Actions 会在 Ubuntu 与 Windows 上分别构建安装包，并创建 Release：
+推送符合 `v*` 的 tag 后，GitHub Actions 会在 Ubuntu、Windows 与 macOS 上分别构建安装包，并创建 Release：
 
 ```bash
 git tag v1.0.2
 git push origin v1.0.2
 ```
 
-产物：`ResumePad-*-linux-x64.AppImage`、`.deb`、`ResumePad-Setup-*-x64.exe`、`ResumePad-Portable-*-x64.exe`（文件名均为连字符，无空格）。
+产物：`ResumePad-*-linux-x64.AppImage`、`.deb`、`ResumePad-Setup-*-x64.exe`、`ResumePad-Portable-*-x64.exe`、`ResumePad-*-mac-arm64.dmg`、`.zip`（及 `mac-x64` 对应 Intel 版；文件名均为连字符，无空格）。
 
 ## 从源码构建（开发者）
 
@@ -139,6 +144,7 @@ git push origin v1.0.2
 nvm use 20
 ./scripts/build-electron.sh linux   # 含 npm ci 与 Node 版本检查
 ./scripts/build-electron.sh win     # 仅 Windows（建议在 windows-latest 上构建）
+./scripts/build-electron.sh mac     # 仅 macOS（需在 Mac 或 macos-latest CI 上构建）
 npm start                           # 开发调试
 ```
 

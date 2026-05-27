@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# 构建 Electron 安装包（Linux AppImage/deb + Windows nsis/portable）
+# 构建 Electron 安装包（Linux AppImage/deb、Windows nsis/portable、macOS dmg/zip）
 # 需要 Node.js >= 18（系统 apt 自带的 nodejs 12 无法安装 Electron 33）
 set -e
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
@@ -94,6 +94,7 @@ fi
 case "${1:-all}" in
   linux) "$NPM" run dist:linux ;;
   win|windows) "$NPM" run dist:win ;;
+  mac|macos|darwin) "$NPM" run dist:mac ;;
   *) "$NPM" run dist ;;
 esac
 
