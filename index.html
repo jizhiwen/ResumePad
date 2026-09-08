@@ -464,13 +464,11 @@
     }
 
     .task-detail .task-section[data-field="goal"] .rich-input,
-    .task-detail .task-section[data-field="srs"] .rich-input,
     .task-detail .task-section[data-field="progress"] .rich-input,
     .task-detail .task-section[data-field="references"] .rich-input {
       min-height: 5.5rem;
     }
 
-    .task-detail .task-section[data-field="srs"] .rich-input,
     .task-detail .task-section[data-field="retrospective"] .rich-input {
       min-height: 9rem;
     }
@@ -1151,9 +1149,9 @@
               <h3 data-i18n-field="goal">要达成什么</h3>
               <div id="goal" class="rich-input" contenteditable="true"></div>
             </section>
-            <section class="task-section" data-field="srs">
-              <h3 data-i18n-field="srs">软件需求（SRS）</h3>
-              <div id="srs" class="rich-input srs" contenteditable="true"></div>
+            <section class="task-section" data-field="references">
+              <h3 data-i18n-field="references">关键引用</h3>
+              <div id="references" class="rich-input refs" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="progress">
               <h3 data-i18n-field="progress">做到哪了</h3>
@@ -1162,10 +1160,6 @@
             <section class="task-section" data-field="nextAction">
               <h3 data-i18n-field="nextAction">下一步 · 立刻做</h3>
               <div id="nextAction" class="rich-input" contenteditable="true"></div>
-            </section>
-            <section class="task-section" data-field="references">
-              <h3 data-i18n-field="references">关键引用</h3>
-              <div id="references" class="rich-input refs" contenteditable="true"></div>
             </section>
             <section class="task-section" data-field="blockers">
               <h3 data-i18n-field="blockers">卡点 / 未决</h3>
@@ -1266,10 +1260,9 @@
     /** title 始终在摘要开头；以下为摘要可选字段（保存在应用数据 settings.summaryInclude） */
     const DEFAULT_SUMMARY_INCLUDE = {
       goal: true,
-      srs: true,
+      references: true,
       progress: true,
       nextAction: true,
-      references: true,
       blockers: true,
       notes: true,
       retrospective: true,
@@ -1279,7 +1272,7 @@
 
     const DEFAULT_LOCALE = 'zh';
     const SUMMARY_INCLUDE_KEYS = [
-      'goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'retrospective',
+      'goal', 'references', 'progress', 'nextAction', 'blockers', 'notes', 'retrospective',
       'parkedAt', 'completedAt',
     ];
 
@@ -1319,7 +1312,6 @@
         fields: {
           title: '任务名称',
           goal: '要达成什么',
-          srs: '软件需求（SRS）',
           progress: '做到哪了',
           nextAction: '下一步 · 立刻做',
           references: '关键引用',
@@ -1330,8 +1322,7 @@
         },
         placeholders: {
           title: '任务名称，如：修复导出编码',
-          goal: '完成后应看到什么结果',
-          srs: '功能范围、验收标准、约束与非目标（给人与 Agent 阅读，可用列表）',
+          goal: '完成后应看到什么结果；范围、验收与约束也可写在这里',
           progress: '已做事项、验证与结论',
           nextAction: '回来后的第一个动作',
           references: '路径、分支、链接或命令',
@@ -1377,10 +1368,9 @@
         },
         summaryField: {
           goal: '要达成什么',
-          srs: '软件需求（SRS）',
+          references: '关键引用',
           progress: '做到哪了',
           nextAction: '下一步 · 立刻做',
-          references: '关键引用',
           blockers: '卡点 / 未决',
           notes: '备忘',
           retrospective: '复盘总结',
@@ -1443,10 +1433,9 @@
           intro: '我正在恢复此前被打断的任务，请根据以下上下文继续协助我，并优先执行「下一步」。',
           task: '【任务】',
           goal: '【目标】',
-          srs: '【软件需求 SRS】',
+          references: '【关键引用】',
           progress: '【当前进度】',
           nextAction: '【下一步 · 请从这里开始】',
-          references: '【关键引用】',
           blockers: '【卡点 / 未决】',
           notes: '【备忘】',
           retrospective: '【复盘总结】',
@@ -1455,14 +1444,13 @@
           images: '【图片】字段内嵌 {n} 张（见 ResumePad 界面）',
           timeParked: '【时间】封存于 {full}',
           timeDone: '已完成于 {full}',
-          outro: '请先简要确认你理解的目标、软件需求（SRS）、复盘与下一步，再开始具体改动或建议。',
+          outro: '请先简要确认你理解的目标、复盘与下一步，再开始具体改动或建议。',
         },
         summary: {
           goal: '## 目标',
-          srs: '## 软件需求（SRS）',
+          references: '## 引用',
           progress: '## 进度',
           nextAction: '## 下一步',
-          references: '## 引用',
           blockers: '## 卡点',
           notes: '## 备忘',
           retrospective: '## 复盘总结',
@@ -1504,7 +1492,6 @@
         fields: {
           title: 'Task name',
           goal: 'Goal',
-          srs: 'Software requirements (SRS)',
           progress: 'Progress',
           nextAction: 'Next · do now',
           references: 'References',
@@ -1515,8 +1502,7 @@
         },
         placeholders: {
           title: 'Task name, e.g. Fix export encoding',
-          goal: 'What done looks like',
-          srs: 'Scope, acceptance criteria, constraints, out of scope (for humans and agents; lists OK)',
+          goal: 'What done looks like; scope, acceptance, and constraints belong here too',
           progress: 'Done so far and conclusions',
           nextAction: 'First action when you resume',
           references: 'Paths, branches, links, commands',
@@ -1562,10 +1548,9 @@
         },
         summaryField: {
           goal: 'Goal',
-          srs: 'Software requirements (SRS)',
+          references: 'References',
           progress: 'Progress',
           nextAction: 'Next · do now',
-          references: 'References',
           blockers: 'Blockers',
           notes: 'Notes',
           retrospective: 'Retrospective',
@@ -1628,10 +1613,9 @@
           intro: 'I am resuming a previously interrupted task. Use the context below and prioritize the next step.',
           task: '[Task]',
           goal: '[Goal]',
-          srs: '[SRS · software requirements]',
+          references: '[References]',
           progress: '[Progress]',
           nextAction: '[Next · start here]',
-          references: '[References]',
           blockers: '[Blockers]',
           notes: '[Notes]',
           retrospective: '[Retrospective]',
@@ -1640,14 +1624,13 @@
           images: '[Images] {n} inline in fields (see ResumePad UI)',
           timeParked: '[Time] parked {full}',
           timeDone: 'Completed {full}',
-          outro: 'Briefly confirm the goal, SRS, retrospective, and next step, then proceed.',
+          outro: 'Briefly confirm the goal, retrospective, and next step, then proceed.',
         },
         summary: {
           goal: '## Goal',
-          srs: '## SRS',
+          references: '## References',
           progress: '## Progress',
           nextAction: '## Next',
-          references: '## References',
           blockers: '## Blockers',
           notes: '## Notes',
           retrospective: '## Retrospective',
@@ -1699,7 +1682,7 @@
       locale: DEFAULT_LOCALE,
     };
 
-    const RICH_FIELDS = ['goal', 'srs', 'progress', 'nextAction', 'references', 'blockers', 'notes', 'retrospective'];
+    const RICH_FIELDS = ['goal', 'references', 'progress', 'nextAction', 'blockers', 'notes', 'retrospective'];
     const EDIT_FIELD_ORDER = ['title', ...RICH_FIELDS];
 
     function cloneDefaultSummaryInclude() {
@@ -2018,13 +2001,22 @@
       };
     }
 
+    function mergeLegacySrsIntoGoal(goal, srs) {
+      const g = goal || '';
+      const s = srs || '';
+      if (!s.trim()) return g;
+      if (!g.trim()) return s;
+      const strip = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (strip(g).includes(strip(s))) return g;
+      return `${g}\n${s}`;
+    }
+
     function normalizeTask(raw) {
       if (!raw || !raw.title) return null;
       return {
         id: raw.id || uid(),
         title: String(raw.title).trim(),
-        goal: raw.goal || '',
-        srs: raw.srs || '',
+        goal: mergeLegacySrsIntoGoal(raw.goal || '', raw.srs || ''),
         progress: raw.progress || '',
         nextAction: raw.nextAction || '',
         references: raw.references || '',
@@ -3141,10 +3133,9 @@
         `# ${task.title}`,
         '',
         inc.goal && task.goal && `${t('summary.goal')}\n${fieldPlain(task.goal)}`,
-        inc.srs && task.srs && `${t('summary.srs')}\n${fieldPlain(task.srs)}`,
+        inc.references && task.references && `${t('summary.references')}\n${fieldPlain(task.references)}`,
         inc.progress && task.progress && `${t('summary.progress')}\n${fieldPlain(task.progress)}`,
         inc.nextAction && task.nextAction && `${t('summary.nextAction')}\n${fieldPlain(task.nextAction)}`,
-        inc.references && task.references && `${t('summary.references')}\n${fieldPlain(task.references)}`,
         inc.blockers && task.blockers && `${t('summary.blockers')}\n${fieldPlain(task.blockers)}`,
         inc.notes && task.notes && `${t('summary.notes')}\n${fieldPlain(task.notes)}`,
         inc.retrospective &&
@@ -3171,10 +3162,9 @@
         `${t('agent.task')}${task.title}`,
       ];
       if (task.goal) sections.push('', t('agent.goal'), fieldPlain(task.goal));
-      if (task.srs) sections.push('', t('agent.srs'), fieldPlain(task.srs));
+      if (task.references) sections.push('', t('agent.references'), fieldPlain(task.references));
       if (task.progress) sections.push('', t('agent.progress'), fieldPlain(task.progress));
       if (task.nextAction) sections.push('', t('agent.nextAction'), fieldPlain(task.nextAction));
-      if (task.references) sections.push('', t('agent.references'), fieldPlain(task.references));
       if (task.blockers) sections.push('', t('agent.blockers'), fieldPlain(task.blockers));
       if (task.notes) sections.push('', t('agent.notes'), fieldPlain(task.notes));
       if (task.retrospective) {
@@ -3276,10 +3266,9 @@
       return {
         title: getTitleValue(),
         goal: getRichValue('goal'),
-        srs: getRichValue('srs'),
+        references: getRichValue('references'),
         progress: getRichValue('progress'),
         nextAction: getRichValue('nextAction'),
-        references: getRichValue('references'),
         blockers: getRichValue('blockers'),
         notes: getRichValue('notes'),
         retrospective: getRichValue('retrospective'),

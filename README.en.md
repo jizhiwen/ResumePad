@@ -93,11 +93,10 @@ Uninstalling the Electron app does not delete `~/.config/resumepad/`; export JSO
 
 Each active task includes these fields so you know what to read first and what to do next:
 
-- **Goal** — objective and definition of done  
-- **Software requirements (SRS)** — scope, acceptance criteria, constraints (for humans and agents; included in Summary / Agent copy)  
+- **Goal** — objective, definition of done, scope, and constraints  
+- **References** — paths, branches, URLs, commands  
 - **Progress** — what is done and what you learned  
 - **Next · do now** — the first action when you resume  
-- **References** — paths, branches, URLs, commands  
 - **Blockers** — open issues and blockers  
 - **Notes** — anything else to remember  
 - **Retrospective** — what went well, improvements, lessons (included in Summary / Agent copy)  
@@ -107,7 +106,7 @@ The preview **always shows** these sections; empty ones show gray placeholders. 
 
 ## Sample data
 
-The repo includes [`docs/dummy.json`](docs/dummy.json) (`version: 3`) with SRS, retrospective, and attachment examples. **Import:** top bar **Import** → choose file → **Merge** or **Replace**.
+The repo includes [`docs/dummy.json`](docs/dummy.json) (`version: 3`) with retrospective and attachment examples. **Import:** top bar **Import** → choose file → **Merge** or **Replace**.
 
 ## Keyboard shortcuts
 
@@ -133,7 +132,33 @@ git push origin v1.0.14
 
 Artifacts: `ResumePad-*-linux-x64.AppImage`, `.deb`, `ResumePad-Setup-*-x64.exe`, `ResumePad-Portable-*-x64.exe`, `ResumePad-*-mac-arm64.dmg`, `.zip` (and `mac-x64` for Intel Macs; hyphenated names, no spaces).
 
-## Build from source (developers)
+## Run from source (developers)
+
+Do not open `index.html` in a browser. Local debugging uses Electron:
+
+```bash
+nvm use 20          # or any Node 18+ (20 recommended; see `.nvmrc`)
+npm install
+npm start
+```
+
+Once the window opens, **Import** → [`docs/dummy.json`](docs/dummy.json) to try sample data. After editing `index.html`, quit and run `npm start` again. Data lives in the same user-data directory as the installed app (see “User data directory” above).
+
+### `npm install` hangs
+
+Deprecation warnings (`deprecated glob`, etc.) are harmless. If it stalls after those warnings with no further output, it is usually downloading Electron’s Chromium binary from GitHub (~100MB+). Press `Ctrl+C`, then use a mirror (helpful on slow GitHub links):
+
+```bash
+export ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+export ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
+
+npm install --registry=https://registry.npmmirror.com --verbose
+npm start
+```
+
+`--verbose` shows whether it is stuck on `Downloading electron`. After a successful install, the binary is cached in `~/.cache/electron/`. You can put the two `export` lines in `~/.bashrc` so you do not have to set them each time.
+
+### Build installers
 
 | Requirement | Notes |
 |-------------|-------|
@@ -142,13 +167,12 @@ Artifacts: `ResumePad-*-linux-x64.AppImage`, `.deb`, `ResumePad-Setup-*-x64.exe`
 
 ```bash
 nvm use 20
-./scripts/build-electron.sh linux   # runs npm ci and Node version check
+./scripts/build-electron.sh linux   # installs deps and checks Node version
 ./scripts/build-electron.sh win     # Windows only (prefer windows-latest CI)
 ./scripts/build-electron.sh mac     # macOS only (requires Mac or macos-latest CI)
-npm start                           # dev mode
 ```
 
-Output is in `dist/`.
+Output is in `dist/`. If the build hangs the same way, set `ELECTRON_MIRROR` from the previous section first.
 
 ## Project layout
 

@@ -93,11 +93,10 @@ rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 
 每条活动任务包含这些字段，便于「回来先读什么、立刻做什么」：
 
-- **要达成什么** — 目标与成功标准  
-- **软件需求（SRS）** — 功能范围、验收标准、约束等（给人与 Agent 阅读；随摘要 / Agent 提示词一并复制）  
+- **要达成什么** — 目标、成功标准、范围与约束  
+- **关键引用** — 路径、分支、URL、命令等  
 - **做到哪了** — 已完成与刚试过的结论  
 - **下一步 · 立刻做** — 恢复后第一件事  
-- **关键引用** — 路径、分支、URL、命令等  
 - **卡点 / 未决** — 阻塞与待决问题  
 - **备忘** — 其他需要记住的信息  
 - **复盘总结** — 做得好的、待改进的、经验与结论（随摘要 / Agent 一并复制）  
@@ -107,7 +106,7 @@ rm -rf ~/.config/resumepad/app-root ~/.config/resumepad/edge-profile
 
 ## 示例数据
 
-仓库提供 [`docs/dummy.json`](docs/dummy.json)（`version: 3`），含 SRS、复盘总结与附件示例。**导入：** 顶部 **导入** → 选择文件 → **合并到现有** 或 **覆盖现有**。
+仓库提供 [`docs/dummy.json`](docs/dummy.json)（`version: 3`），含复盘总结与附件示例。**导入：** 顶部 **导入** → 选择文件 → **合并到现有** 或 **覆盖现有**。
 
 ## 快捷键
 
@@ -133,7 +132,33 @@ git push origin v1.0.2
 
 产物：`ResumePad-*-linux-x64.AppImage`、`.deb`、`ResumePad-Setup-*-x64.exe`、`ResumePad-Portable-*-x64.exe`、`ResumePad-*-mac-arm64.dmg`、`.zip`（及 `mac-x64` 对应 Intel 版；文件名均为连字符，无空格）。
 
-## 从源码构建（开发者）
+## 从源码启动（开发者）
+
+不要用浏览器打开 `index.html`。本地调试走 Electron：
+
+```bash
+nvm use 20          # 没有 nvm 就用 Node 18+（推荐 20，见 `.nvmrc`）
+npm install
+npm start
+```
+
+窗口起来后可顶部 **导入** → 选择 [`docs/dummy.json`](docs/dummy.json) 体验示例。改 `index.html` 后关掉窗口再 `npm start` 一次。数据目录与安装版相同（见上方「用户数据目录」）。
+
+### `npm install` 卡住
+
+弃用警告（`deprecated glob` 等）可忽略。若打印完警告后一直无进度，多半是在从 GitHub 下载 Electron 的 Chromium 二进制（约 100MB+）。`Ctrl+C` 停掉后改走镜像：
+
+```bash
+export ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+export ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
+
+npm install --registry=https://registry.npmmirror.com --verbose
+npm start
+```
+
+`--verbose` 可确认是否停在 `Downloading electron`。装成功一次后，二进制缓存在 `~/.cache/electron/`，下次会快很多。可将两行 `export` 写入 `~/.bashrc` 以免每次重设。
+
+### 构建安装包
 
 | 要求 | 说明 |
 |------|------|
@@ -142,13 +167,12 @@ git push origin v1.0.2
 
 ```bash
 nvm use 20
-./scripts/build-electron.sh linux   # 含 npm ci 与 Node 版本检查
+./scripts/build-electron.sh linux   # 含依赖安装与 Node 版本检查
 ./scripts/build-electron.sh win     # 仅 Windows（建议在 windows-latest 上构建）
 ./scripts/build-electron.sh mac     # 仅 macOS（需在 Mac 或 macos-latest CI 上构建）
-npm start                           # 开发调试
 ```
 
-产物在 `dist/`。
+产物在 `dist/`。若构建时同样卡住，先设置上一节的 `ELECTRON_MIRROR` 再跑脚本。
 
 ## 项目结构
 
