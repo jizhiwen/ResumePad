@@ -88,6 +88,7 @@ Uninstalling the Electron app does not delete `~/.config/resumepad/`; export JSO
 | **Agent** | Copy a resume prompt for AI assistants |
 | **Summary** | Copy a Markdown task summary per settings |
 | **Done** | Move the current task to Completed |
+| **Weekly** | Dialog of this week’s completed tasks and next week’s queue (Mon–Sun; next week is the current queue); copy to clipboard |
 | **Export / Import** | JSON backup and restore (merge or replace) |
 | **Settings · appearance** | Light / dark theme (`T` still toggles theme) |
 

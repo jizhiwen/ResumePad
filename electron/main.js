@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, shell } = require('electron');
+const { app, BrowserWindow, Menu, screen, shell, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -60,6 +60,31 @@ function saveBounds(win) {
   }
 }
 
+function attachContextMenu(win) {
+  win.webContents.on('context-menu', (_event, params) => {
+    const { isEditable, selectionText, editFlags } = params;
+    const hasSelection = Boolean(selectionText);
+    if (!isEditable && !hasSelection) return;
+
+    const template = isEditable
+      ? [
+          { role: 'undo', enabled: editFlags.canUndo },
+          { role: 'redo', enabled: editFlags.canRedo },
+          { type: 'separator' },
+          { role: 'cut', enabled: editFlags.canCut },
+          { role: 'copy', enabled: editFlags.canCopy },
+          { role: 'paste', enabled: editFlags.canPaste },
+          { role: 'selectAll', enabled: editFlags.canSelectAll },
+        ]
+      : [
+          { role: 'copy', enabled: editFlags.canCopy },
+          { role: 'selectAll', enabled: editFlags.canSelectAll },
+        ];
+
+    Menu.buildFromTemplate(template).popup({ window: win });
+  });
+}
+
 function attachExternalLinkHandler(win) {
   const openExternal = (url) => {
     if (/^https?:/i.test(url)) shell.openExternal(url);
@@ -83,7 +108,7 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     title: 'ResumePad',
-    backgroundColor: '#fafafa',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d1117' : '#fafafa',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -92,6 +117,17 @@ function createWindow() {
   });
 
   attachExternalLinkHandler(win);
+  attachContextMenu(win);
+  win.webContents.on('dom-ready', () => {
+    win.webContents
+      .executeJavaScript('document.documentElement.dataset.theme')
+      .then((theme) => {
+        if (!win.isDestroyed()) {
+          win.setBackgroundColor(theme === 'dark' ? '#0d1117' : '#fafafa');
+        }
+      })
+      .catch(() => {});
+  });
   win.once('ready-to-show', () => win.show());
   win.loadFile(path.join(__dirname, '..', 'index.html'), { query: { standalone: '1' } });
 

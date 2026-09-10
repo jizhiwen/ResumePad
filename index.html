@@ -18,8 +18,8 @@
       var t = localStorage.getItem(k);
       var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-      var bg = dark ? '#0a0a0a' : '#fafafa';
-      var fg = dark ? '#fafafa' : '#171717';
+      var bg = dark ? '#0d1117' : '#fafafa';
+      var fg = dark ? '#e6edf3' : '#171717';
       document.documentElement.style.background = bg;
       document.documentElement.style.color = fg;
       if (/[?&]standalone(?:=1)?(?:&|$)/.test(location.search)) {
@@ -47,26 +47,67 @@
       --toast-fg: #fafafa;
       --backdrop: rgba(0, 0, 0, 0.4);
       --radius: 4px;
+      --shadow: none;
+      --sidebar-bg: var(--bg);
+      --main-bg: var(--bg);
+      --label: var(--muted);
       --font: system-ui, -apple-system, "Segoe UI", "Noto Sans SC", sans-serif;
       --mono: ui-monospace, "SF Mono", monospace;
     }
 
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #0a0a0a;
-      --surface: #0a0a0a;
-      --muted-surface: #141414;
-      --ink: #fafafa;
-      --muted: #a3a3a3;
-      --border: #262626;
-      --accent-hover: #d4d4d4;
-      --danger: #f87171;
-      --toast-bg: #fafafa;
-      --toast-fg: #0a0a0a;
-      --backdrop: rgba(0, 0, 0, 0.7);
+      /* GitHub Primer dark + Material tonal elevation: higher surface = lighter */
+      --bg: #0d1117;
+      --sidebar-bg: #161b22;
+      --main-bg: #0d1117;
+      --surface: #21262d;
+      --muted-surface: #30363d;
+      --ink: #e6edf3;
+      --label: #b1bac4;
+      --muted: #9198a1;
+      --border: #3d444d;
+      --accent-hover: #f0f3f6;
+      --danger: #f85149;
+      --toast-bg: #e6edf3;
+      --toast-fg: #0d1117;
+      --backdrop: rgba(1, 4, 9, 0.72);
+      --shadow: 0 0 0 1px #3d444d, 0 16px 48px rgba(1, 4, 9, 0.55);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scrollbar-color: var(--border) transparent;
+    }
+
+    ::selection {
+      background: #d4d4d4;
+      color: #171717;
+    }
+
+    :root[data-theme="dark"] ::selection {
+      background: #1f6feb;
+      color: #ffffff;
+    }
+
+    :root[data-theme="dark"] ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    :root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: #3d444d;
+      border-radius: 8px;
+    }
+
+    :root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+      background: #656d76;
+    }
+
+    :root[data-theme="dark"] ::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
     body {
       font-family: var(--font);
@@ -138,6 +179,7 @@
       gap: 8px;
       padding: 10px 14px;
       flex-wrap: wrap;
+      background: var(--bg);
     }
 
     button.brand {
@@ -187,7 +229,7 @@
       cursor: pointer;
       border: none;
       background: transparent;
-      color: var(--muted);
+      color: var(--label);
       padding: 4px 8px;
       border-radius: var(--radius);
       transition: color 0.15s, background 0.15s;
@@ -273,13 +315,14 @@
       max-height: calc(100vh - 52px);
       overflow-y: auto;
       min-width: 0;
+      background: var(--sidebar-bg);
     }
 
     .sidebar h2 {
       font-size: 0.6875rem;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: var(--muted);
+      color: var(--label);
       padding: 0 20px 8px;
       text-transform: none;
     }
@@ -299,7 +342,7 @@
       font-size: 0.6875rem;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: var(--muted);
+      color: var(--label);
       padding: 0 20px 8px;
     }
 
@@ -350,7 +393,7 @@
 
     .task-item .next-preview {
       font-size: 0.75rem;
-      color: var(--muted);
+      color: var(--label);
       margin-top: 4px;
       line-height: 1.35;
       word-break: break-word;
@@ -367,6 +410,7 @@
       min-height: 360px;
       padding: 32px 40px 48px;
       max-width: none;
+      background: var(--main-bg);
     }
 
     @media (max-width: 720px) {
@@ -381,7 +425,7 @@
     .task-detail .badge {
       display: block;
       font-size: 0.6875rem;
-      color: var(--muted);
+      color: var(--label);
       margin-bottom: 16px;
     }
 
@@ -430,7 +474,7 @@
       font-size: 0.6875rem;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: var(--muted);
+      color: var(--label);
       margin-bottom: 8px;
       text-transform: none;
     }
@@ -796,6 +840,36 @@
       box-shadow: 0 0 0 1px var(--ink);
     }
 
+    :root[data-theme="dark"] .task-detail.is-editing #title.task-title:focus,
+    :root[data-theme="dark"] .task-detail.is-editing .rich-input:focus,
+    :root[data-theme="dark"] .task-detail.is-editing .task-section:focus-within .rich-input {
+      border-color: #4493f8;
+      box-shadow: 0 0 0 1px #4493f8;
+    }
+
+    :root[data-theme="dark"] .task-detail:not(.is-editing) .rich-input.is-field-empty::before,
+    :root[data-theme="dark"] .task-detail:not(.is-editing) #title.task-title.is-field-empty::before {
+      opacity: 1;
+      color: var(--muted);
+    }
+
+    :root[data-theme="dark"] .task-section h3,
+    :root[data-theme="dark"] .sidebar h2,
+    :root[data-theme="dark"] .sidebar .schedule-block h2,
+    :root[data-theme="dark"] .weekly-dialog-body h4 {
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+    }
+
+    :root[data-theme="dark"] button.primary {
+      color: #0d1117;
+    }
+
+    :root[data-theme="dark"] button.primary:hover {
+      color: #0d1117;
+      background: #f0f3f6;
+    }
+
     .task-detail.is-editing .task-section:focus-within h3 {
       color: var(--ink);
     }
@@ -825,6 +899,65 @@
       max-width: 420px;
     }
 
+    dialog.weekly-dialog {
+      max-width: 560px;
+      width: calc(100vw - 32px);
+    }
+
+    .weekly-dialog-range {
+      margin-bottom: 16px;
+    }
+
+    .weekly-dialog-body {
+      margin: 0;
+      max-height: min(60vh, 28rem);
+      overflow: auto;
+      padding: 2px 2px 4px;
+      font-size: 0.9375rem;
+      line-height: 1.55;
+      background: transparent;
+      border: none;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .weekly-dialog-body h4 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--label);
+      margin: 20px 0 10px;
+    }
+
+    .weekly-dialog-body h4:first-child {
+      margin-top: 0;
+    }
+
+    .weekly-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .weekly-item-title {
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .weekly-item-extra {
+      margin-top: 4px;
+      color: var(--label);
+      font-size: 0.8125rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .weekly-empty {
+      margin: 0;
+      color: var(--muted);
+    }
+
     .settings-section {
       margin-bottom: 8px;
     }
@@ -832,7 +965,7 @@
     .settings-section h4 {
       font-size: 0.75rem;
       font-weight: 500;
-      color: var(--muted);
+      color: var(--label);
       margin-bottom: 12px;
     }
 
@@ -1059,7 +1192,7 @@
       max-width: 380px;
       background: var(--surface);
       color: var(--ink);
-      box-shadow: none;
+      box-shadow: var(--shadow);
     }
 
     dialog::backdrop { background: var(--backdrop); }
@@ -1096,6 +1229,7 @@
       </button>
       <nav class="toolbar">
         <button type="button" id="btnSettings" data-i18n="nav.settings" data-i18n-title="nav.settingsTitle">设置</button>
+        <button type="button" id="btnWeekly" data-i18n="nav.weekly" data-i18n-title="nav.weeklyTitle">周报</button>
         <button type="button" id="btnExport" data-i18n="nav.export" data-i18n-title="nav.exportTitle">导出</button>
         <button type="button" id="btnImport" data-i18n="nav.import">导入</button>
         <button type="button" id="btnNew" data-i18n="nav.switch" data-i18n-title="nav.switchTitle">Switch</button>
@@ -1217,6 +1351,16 @@
     </div>
   </div>
 
+  <dialog id="weeklyDialog" class="weekly-dialog">
+    <h3 id="weeklyDialogTitle" data-i18n="weekly.title">周报</h3>
+    <p id="weeklyDialogRange" class="weekly-dialog-range"></p>
+    <div id="weeklyDialogBody" class="weekly-dialog-body"></div>
+    <div class="actions">
+      <button type="button" id="weeklyDialogClose" data-i18n="weekly.close">关闭</button>
+      <button type="button" class="primary" id="weeklyDialogCopy" data-i18n="weekly.copy">复制</button>
+    </div>
+  </dialog>
+
   <dialog id="confirmDialog">
     <h3 id="confirmTitle">确认</h3>
     <p id="confirmMessage"></p>
@@ -1289,6 +1433,8 @@
           themeTitleLight: '深色 (T)',
           settings: '设置',
           settingsTitle: '设置',
+          weekly: '周报',
+          weeklyTitle: '本周完成与下周待办',
           export: '导出',
           exportTitle: '导出 JSON',
           import: '导入',
@@ -1415,6 +1561,7 @@
           parked: '已入队',
           copiedAgent: '已复制 Agent 提示词',
           copiedSummary: '已复制摘要',
+          copiedWeekly: '已复制周报',
           movedToHistory: '已移入完成历史',
           restored: '已恢复到排队',
           deletedHistory: '已从历史删除',
@@ -1456,6 +1603,19 @@
           retrospective: '## 复盘总结',
           attachments: '## 附件',
         },
+        weekly: {
+          title: '周报',
+          close: '关闭',
+          copy: '复制',
+          range: '{start} ~ {end} · 周一至周日',
+          hint: '本周完成按完成时间；下周待办为当前排队任务。',
+          heading: '# 周报（{start} ~ {end}）',
+          doneHeading: '## 本周完成',
+          todoHeading: '## 下周待办',
+          empty: '（无）',
+          nextPrefix: '下一步：',
+          retroPrefix: '复盘：',
+        },
       },
       en: {
         pageTitle: 'ResumePad — Task context recovery',
@@ -1469,6 +1629,8 @@
           themeTitleLight: 'Dark mode (T)',
           settings: 'Settings',
           settingsTitle: 'Settings',
+          weekly: 'Weekly',
+          weeklyTitle: 'This week’s done and next week’s queue',
           export: 'Export',
           exportTitle: 'Export JSON',
           import: 'Import',
@@ -1595,6 +1757,7 @@
           parked: 'Queued',
           copiedAgent: 'Agent prompt copied',
           copiedSummary: 'Summary copied',
+          copiedWeekly: 'Weekly report copied',
           movedToHistory: 'Moved to completed',
           restored: 'Restored to queue',
           deletedHistory: 'Removed from history',
@@ -1635,6 +1798,19 @@
           notes: '## Notes',
           retrospective: '## Retrospective',
           attachments: '## Attachments',
+        },
+        weekly: {
+          title: 'Weekly report',
+          close: 'Close',
+          copy: 'Copy',
+          range: '{start} – {end} · Monday–Sunday',
+          hint: 'Done this week uses completion time; next week is the current queue.',
+          heading: '# Weekly report ({start} – {end})',
+          doneHeading: '## Done this week',
+          todoHeading: '## Next week',
+          empty: '(none)',
+          nextPrefix: 'Next: ',
+          retroPrefix: 'Retro: ',
         },
       },
     };
@@ -1824,6 +2000,7 @@
 
       applyFieldLocales();
       syncThemeSettingsUI();
+      if ($('#weeklyDialog')?.open) fillWeeklyDialog();
     }
 
     async function setLocale(locale) {
@@ -2075,8 +2252,9 @@
 
     function fieldPlain(value) {
       if (!value) return '';
-      if (isRichContent(value)) return htmlToPlain(value).trim();
-      return value.replace(/\r\n?/g, '\n').trim();
+      const s = String(value);
+      if (/<[a-z/]/i.test(s)) return htmlToPlain(s).trim();
+      return s.replace(/\r\n?/g, '\n').trim();
     }
 
     function hasFieldContent(body) {
@@ -2697,6 +2875,8 @@
     function setTheme(theme) {
       const next = theme === 'dark' ? 'dark' : 'light';
       document.documentElement.dataset.theme = next;
+      document.documentElement.style.background = next === 'dark' ? '#0d1117' : '#fafafa';
+      document.documentElement.style.color = next === 'dark' ? '#e6edf3' : '#171717';
       try {
         localStorage.setItem(THEME_KEY, next);
       } catch { /* theme only */ }
@@ -2852,6 +3032,161 @@
       return new Date(iso).toLocaleString(localeTag(), {
         year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function formatWeekDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function currentWeekBounds(now = new Date()) {
+      const start = startOfWeek(now);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return { start, end };
+    }
+
+    function isInCurrentWeek(iso, weekStart) {
+      if (!iso) return false;
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return false;
+      return startOfWeek(d).getTime() === weekStart.getTime();
+    }
+
+    function appendWeeklyField(lines, prefix, value) {
+      const body = fieldPlain(value);
+      if (!body) return;
+      const parts = body.split('\n').filter((p) => p.length);
+      if (!parts.length) return;
+      if (parts.length === 1) {
+        lines.push(`${prefix}${parts[0]}`);
+        return;
+      }
+      lines.push(prefix.trimEnd());
+      parts.forEach((p) => lines.push(p));
+    }
+
+    function formatWeeklyItem(task, { extraPrefix, extraValue }) {
+      const title = fieldPlain(task.title) || String(task.title || '').trim();
+      const lines = [title];
+      appendWeeklyField(lines, extraPrefix, extraValue);
+      return lines.join('\n');
+    }
+
+    function weeklyItemHtml(task, extraPrefix, extraValue) {
+      const title = escapeHtml(fieldPlain(task.title) || String(task.title || '').trim());
+      const extra = fieldPlain(extraValue);
+      const extraHtml = extra
+        ? `<div class="weekly-item-extra">${escapeHtml(extraPrefix)}${escapeHtml(extra).replace(/\n/g, '<br>')}</div>`
+        : '';
+      return `<div class="weekly-item"><div class="weekly-item-title">${title}</div>${extraHtml}</div>`;
+    }
+
+    function weeklyListHtml(tasks, extraPrefix, extraKey) {
+      if (!tasks.length) {
+        return `<p class="weekly-empty">${escapeHtml(t('weekly.empty'))}</p>`;
+      }
+      return `<div class="weekly-list">${tasks
+        .map((task) => weeklyItemHtml(task, extraPrefix, task[extraKey]))
+        .join('')}</div>`;
+    }
+
+    function thisWeekDoneTasks() {
+      const { start } = currentWeekBounds();
+      return history
+        .filter((task) => isInCurrentWeek(task.completedAt, start))
+        .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+    }
+
+    function buildWeeklyReport() {
+      const { start, end } = currentWeekBounds();
+      const startStr = formatWeekDate(start);
+      const endStr = formatWeekDate(end);
+      const done = thisWeekDoneTasks();
+      const todos = getQueuedTasks();
+
+      const doneBlock = done.length
+        ? done
+            .map((task) =>
+              formatWeeklyItem(task, {
+                extraPrefix: t('weekly.retroPrefix'),
+                extraValue: task.retrospective,
+              }),
+            )
+            .join('\n')
+        : t('weekly.empty');
+      const todoBlock = todos.length
+        ? todos
+            .map((task) =>
+              formatWeeklyItem(task, {
+                extraPrefix: t('weekly.nextPrefix'),
+                extraValue: task.nextAction,
+              }),
+            )
+            .join('\n')
+        : t('weekly.empty');
+
+      return [
+        tf('weekly.heading', { start: startStr, end: endStr }),
+        '',
+        t('weekly.doneHeading'),
+        '',
+        doneBlock,
+        '',
+        t('weekly.todoHeading'),
+        '',
+        todoBlock,
+        '',
+      ].join('\n');
+    }
+
+    function buildWeeklyReportHtml() {
+      const done = thisWeekDoneTasks();
+      const todos = getQueuedTasks();
+      return [
+        `<h4>${escapeHtml(t('weekly.doneHeading').replace(/^#+\s*/, ''))}</h4>`,
+        weeklyListHtml(done, t('weekly.retroPrefix'), 'retrospective'),
+        `<h4>${escapeHtml(t('weekly.todoHeading').replace(/^#+\s*/, ''))}</h4>`,
+        weeklyListHtml(todos, t('weekly.nextPrefix'), 'nextAction'),
+      ].join('');
+    }
+
+    let weeklyReportMarkdown = '';
+
+    function fillWeeklyDialog() {
+      const { start, end } = currentWeekBounds();
+      const rangeEl = $('#weeklyDialogRange');
+      if (rangeEl) {
+        rangeEl.textContent = `${tf('weekly.range', {
+          start: formatWeekDate(start),
+          end: formatWeekDate(end),
+        })} · ${t('weekly.hint')}`;
+      }
+      weeklyReportMarkdown = buildWeeklyReport();
+      const body = $('#weeklyDialogBody');
+      if (body) body.innerHTML = buildWeeklyReportHtml();
+    }
+
+    async function showWeeklyDialog() {
+      if (isTaskEditing()) {
+        const result = await saveCurrentForm({ silent: true });
+        if (!result.ok) return;
+      }
+      fillWeeklyDialog();
+      $('#weeklyDialog')?.showModal();
+    }
+
+    function initWeeklyDialog() {
+      $('#btnWeekly')?.addEventListener('click', () => {
+        void showWeeklyDialog();
+      });
+      $('#weeklyDialogClose')?.addEventListener('click', () => $('#weeklyDialog')?.close());
+      $('#weeklyDialogCopy')?.addEventListener('click', () => {
+        const text = weeklyReportMarkdown || buildWeeklyReport();
+        copyText(text, t('toast.copiedWeekly'));
       });
     }
 
@@ -4025,7 +4360,8 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.target.matches('input, textarea, [contenteditable="true"]') && e.key !== 'Escape') return;
-      if (e.key === 'n' || e.key === 'N') {
+      const modalOpen = !!document.querySelector('dialog[open]');
+      if ((e.key === 'n' || e.key === 'N') && !modalOpen) {
         e.preventDefault();
         startNewTask();
       }
@@ -4035,6 +4371,12 @@
         toggleTheme();
       }
       if (e.key === 'Escape') {
+        const weekly = $('#weeklyDialog');
+        if (weekly?.open) {
+          e.preventDefault();
+          weekly.close();
+          return;
+        }
         const attPreview = $('#attachmentPreviewOverlay');
         if (attPreview && !attPreview.classList.contains('hidden')) {
           e.preventDefault();
@@ -4060,6 +4402,7 @@
       initImagePreview();
       initAttachments();
       initTaskDetailDblClick();
+      initWeeklyDialog();
       if (!window.indexedDB) {
         toast(t('toast.noIdb'));
         return;
