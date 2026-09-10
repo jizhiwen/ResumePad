@@ -351,7 +351,8 @@
       padding-bottom: 8px;
     }
 
-    .task-item .schedule-tag {
+    .task-item .schedule-tag,
+    .task-item .pin-tag {
       display: inline-block;
       font-size: 0.625rem;
       font-weight: 500;
@@ -376,6 +377,38 @@
     }
 
     .task-item.history-item .title { font-weight: 400; }
+
+    .task-item-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .task-item-head .title { flex: 1; min-width: 0; }
+
+    .task-item .pin-toggle {
+      flex-shrink: 0;
+      margin: -2px -8px 0 0;
+      padding: 2px 6px;
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      line-height: 1.4;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .task-item:hover .pin-toggle,
+    .task-item.active .pin-toggle,
+    .task-item .pin-toggle:focus-visible,
+    .task-item.pinned-item .pin-toggle {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .task-item.pinned-item .pin-toggle.is-on {
+      color: var(--ink);
+    }
 
     .task-item .title {
       font-weight: 500;
@@ -1449,6 +1482,7 @@
           resizerLabel: '拖动调整列表宽度',
           metaParked: '入队于 {time}',
           metaDone: '完成于 {time}',
+          pinned: '置顶',
         },
         welcome: {
           title: '选择任务',
@@ -1496,6 +1530,8 @@
           agent: 'Agent',
           summary: '摘要',
           done: '完成',
+          pin: '置顶',
+          unpin: '取消置顶',
           restore: '恢复',
           delete: '删除',
         },
@@ -1562,6 +1598,8 @@
           copiedAgent: '已复制 Agent 提示词',
           copiedSummary: '已复制摘要',
           copiedWeekly: '已复制周报',
+          pinned: '已置顶',
+          unpinned: '已取消置顶',
           movedToHistory: '已移入完成历史',
           restored: '已恢复到排队',
           deletedHistory: '已从历史删除',
@@ -1645,6 +1683,7 @@
           resizerLabel: 'Drag to resize list',
           metaParked: 'Queued {time}',
           metaDone: 'Done {time}',
+          pinned: 'Pinned',
         },
         welcome: {
           title: 'Pick a task',
@@ -1692,6 +1731,8 @@
           agent: 'Agent',
           summary: 'Summary',
           done: 'Done',
+          pin: 'Pin',
+          unpin: 'Unpin',
           restore: 'Restore',
           delete: 'Delete',
         },
@@ -1758,6 +1799,8 @@
           copiedAgent: 'Agent prompt copied',
           copiedSummary: 'Summary copied',
           copiedWeekly: 'Weekly report copied',
+          pinned: 'Pinned to top',
+          unpinned: 'Unpinned',
           movedToHistory: 'Moved to completed',
           restored: 'Restored to queue',
           deletedHistory: 'Removed from history',
@@ -1880,10 +1923,18 @@
       appSettings.locale = currentLocale;
     }
 
+    function isTaskPinned(task) {
+      return Boolean(task?.pinned);
+    }
+
     function getQueuedTasks() {
-      return tasks
-        .slice()
-        .sort((a, b) => new Date(b.parkedAt) - new Date(a.parkedAt));
+      return tasks.slice().sort((a, b) => {
+        const ap = isTaskPinned(a);
+        const bp = isTaskPinned(b);
+        if (ap !== bp) return ap ? -1 : 1;
+        if (ap && bp) return new Date(b.pinnedAt || 0) - new Date(a.pinnedAt || 0);
+        return new Date(b.parkedAt) - new Date(a.parkedAt);
+      });
     }
 
     /** 旧版 running 状态一律迁移为排队 */
@@ -2190,6 +2241,11 @@
 
     function normalizeTask(raw) {
       if (!raw || !raw.title) return null;
+      const parkedAt = raw.parkedAt || raw.updatedAt || new Date().toISOString();
+      const updatedAt = raw.updatedAt || raw.parkedAt || parkedAt;
+      const pinnedAt = raw.pinned || raw.pinnedAt
+        ? (raw.pinnedAt || updatedAt || parkedAt)
+        : null;
       return {
         id: raw.id || uid(),
         title: String(raw.title).trim(),
@@ -2201,10 +2257,12 @@
         notes: raw.notes || '',
         retrospective: raw.retrospective || '',
         attachments: normalizeAttachments(raw.attachments),
-        parkedAt: raw.parkedAt || raw.updatedAt || new Date().toISOString(),
-        updatedAt: raw.updatedAt || raw.parkedAt || new Date().toISOString(),
+        parkedAt,
+        updatedAt,
         completedAt: raw.completedAt || null,
         scheduleState: 'queued',
+        pinned: Boolean(pinnedAt),
+        pinnedAt,
       };
     }
 
@@ -3543,11 +3601,21 @@
       const nextPlain = listPreviewText(task.nextAction);
       const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
       const extraClass = listKind === 'history' ? ' history-item' : ' queued-item';
+      const pinned = listKind !== 'history' && isTaskPinned(task);
+      const pinnedClass = pinned ? ' pinned-item' : '';
+      const activeClass = active ? ' active' : '';
       const metaTime = listKind === 'history' ? task.completedAt : task.parkedAt;
       const metaKey = listKind === 'history' ? 'sidebar.metaDone' : 'sidebar.metaParked';
       const dataKind = listKind === 'history' ? 'history' : 'active';
-      return `<li class="task-item${extraClass}${active}" data-id="${task.id}" data-kind="${dataKind}">
-          <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
+      const pinLabel = pinned ? t('actions.unpin') : t('actions.pin');
+      const pinBtn = listKind === 'history'
+        ? ''
+        : `<button type="button" class="pin-toggle${pinned ? ' is-on' : ''}" data-pin-toggle aria-pressed="${pinned ? 'true' : 'false'}" title="${escapeHtml(pinLabel)}" aria-label="${escapeHtml(pinLabel)}">${escapeHtml(t('sidebar.pinned'))}</button>`;
+      return `<li class="task-item${extraClass}${pinnedClass}${activeClass}" data-id="${task.id}" data-kind="${dataKind}">
+          <div class="task-item-head">
+            <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
+            ${pinBtn}
+          </div>
           <div class="meta">${escapeHtml(tf(metaKey, { time: formatRelative(metaTime, { weekLabel: listKind === 'history' }) }))}</div>
           ${next}
         </li>`;
@@ -3581,8 +3649,14 @@
         .join('');
 
       document.querySelectorAll('.task-item').forEach((el) => {
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('[data-pin-toggle]')) return;
           navigateToTask(el.dataset.id, el.dataset.kind === 'history');
+        });
+        el.querySelector('[data-pin-toggle]')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void togglePin(el.dataset.id);
         });
       });
     }
@@ -3641,6 +3715,8 @@
           parkedAt: now,
           updatedAt: now,
           scheduleState: 'queued',
+          pinned: false,
+          pinnedAt: null,
         });
         $('#taskId').value = id;
         selectedId = id;
@@ -3797,15 +3873,18 @@
         $('#btnRestoreResume').onclick = () => restoreFromHistory(task.id);
         $('#btnDeleteHistory').onclick = () => deleteFromHistory(task.id);
       } else {
+        const pinAction = isTaskPinned(task) ? t('actions.unpin') : t('actions.pin');
         host.innerHTML = `
         <button type="button" id="btnEditResume">${escapeHtml(t('actions.edit'))}</button>
         <button type="button" id="btnCopyAgent">${escapeHtml(t('actions.agent'))}</button>
         <button type="button" id="btnCopyResume">${escapeHtml(t('actions.summary'))}</button>
+        <button type="button" id="btnPinResume">${escapeHtml(pinAction)}</button>
         <button type="button" id="btnDoneResume">${escapeHtml(t('actions.done'))}</button>
       `;
         $('#btnEditResume').onclick = () => enterTaskEdit();
         $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(task), t('toast.copiedAgent'));
         $('#btnCopyResume').onclick = () => copyText(buildSummary(task), t('toast.copiedSummary'));
+        $('#btnPinResume').onclick = () => togglePin(task.id);
         $('#btnDoneResume').onclick = () => markDone(task.id);
       }
     }
@@ -4123,6 +4202,30 @@
       });
     }
 
+    async function togglePin(id) {
+      if (!id) return;
+      if (isTaskEditing() && $('#taskId').value === id) {
+        const result = await saveCurrentForm({ silent: true });
+        if (!result.ok) return;
+      }
+      const idx = tasks.findIndex((x) => x.id === id);
+      if (idx < 0) return;
+      const now = new Date().toISOString();
+      const pinned = !isTaskPinned(tasks[idx]);
+      tasks[idx] = {
+        ...tasks[idx],
+        pinned,
+        pinnedAt: pinned ? now : null,
+        updatedAt: now,
+      };
+      await save();
+      renderList();
+      if (selectedId === id && !selectedFromHistory) {
+        bindTaskDetailActions(tasks[idx], false);
+      }
+      toast(pinned ? t('toast.pinned') : t('toast.unpinned'));
+    }
+
     async function markDone(id) {
       if (isTaskEditing() && $('#taskId').value === id) {
         const result = await saveCurrentForm({ silent: true });
@@ -4134,7 +4237,7 @@
       if (idx < 0) return;
       const task = tasks[idx];
       const now = new Date().toISOString();
-      history.unshift({ ...task, completedAt: now, updatedAt: now });
+      history.unshift({ ...task, completedAt: now, updatedAt: now, pinned: false, pinnedAt: null });
       tasks.splice(idx, 1);
       await save();
       selectedFromHistory = true;
@@ -4150,7 +4253,14 @@
       const task = history[idx];
       const now = new Date().toISOString();
       const { completedAt, ...rest } = task;
-      const restored = { ...rest, parkedAt: now, updatedAt: now, scheduleState: 'queued' };
+      const restored = {
+        ...rest,
+        parkedAt: now,
+        updatedAt: now,
+        scheduleState: 'queued',
+        pinned: false,
+        pinnedAt: null,
+      };
       tasks.push(restored);
       history.splice(idx, 1);
       await save();

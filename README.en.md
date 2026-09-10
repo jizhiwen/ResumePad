@@ -80,13 +80,14 @@ Uninstalling the Electron app does not delete `~/.config/resumepad/`; export JSO
 
 | Area / control | Purpose |
 |----------------|---------|
-| **Queued** | Active tasks, sorted by queue time; click to open details |
+| **Queued** | Active tasks; pinned first, then by queue time; click to open details |
 | **Completed** | Finished tasks (kept until you delete them) |
 | **Switch** | New task form (saved tasks join the queue) |
 | **Settings** | UI language (中文 / English), theme (light/dark), summary copy fields (language and summary travel with JSON export/import; theme stays local) |
 | **Edit** | Enter edit mode from the preview footer (same as double-clicking a section) |
 | **Agent** | Copy a resume prompt for AI assistants |
 | **Summary** | Copy a Markdown task summary per settings |
+| **Pin / Unpin** | Pin the current queued task to the top of the list (cleared when completed or restored from history) |
 | **Done** | Move the current task to Completed |
 | **Weekly** | Dialog of this week’s completed tasks and next week’s queue (Mon–Sun; next week is the current queue); copy to clipboard |
 | **Export / Import** | JSON backup and restore (merge or replace) |
