@@ -240,6 +240,12 @@
       background: var(--muted-surface);
     }
 
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+
     button.primary {
       color: var(--bg);
       background: var(--ink);
@@ -386,7 +392,8 @@
 
     .task-item-head .title { flex: 1; min-width: 0; }
 
-    .task-item .pin-toggle {
+    .task-item .pin-toggle,
+    .task-item .report-toggle {
       flex-shrink: 0;
       margin: -2px -8px 0 0;
       padding: 2px 6px;
@@ -401,12 +408,17 @@
     .task-item:hover .pin-toggle,
     .task-item.active .pin-toggle,
     .task-item .pin-toggle:focus-visible,
-    .task-item.pinned-item .pin-toggle {
+    .task-item.pinned-item .pin-toggle,
+    .task-item:hover .report-toggle,
+    .task-item.active .report-toggle,
+    .task-item .report-toggle:focus-visible,
+    .task-item.reported-item .report-toggle {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .task-item.pinned-item .pin-toggle.is-on {
+    .task-item.pinned-item .pin-toggle.is-on,
+    .task-item.reported-item .report-toggle.is-on {
       color: var(--ink);
     }
 
@@ -1390,6 +1402,7 @@
     <div id="weeklyDialogBody" class="weekly-dialog-body"></div>
     <div class="actions">
       <button type="button" id="weeklyDialogClose" data-i18n="weekly.close">关闭</button>
+      <button type="button" id="weeklyDialogMarkReported" data-i18n="weekly.markReported">标记已汇报</button>
       <button type="button" class="primary" id="weeklyDialogCopy" data-i18n="weekly.copy">复制</button>
     </div>
   </dialog>
@@ -1483,6 +1496,7 @@
           metaParked: '入队于 {time}',
           metaDone: '完成于 {time}',
           pinned: '置顶',
+          reported: '已汇报',
         },
         welcome: {
           title: '选择任务',
@@ -1532,6 +1546,8 @@
           done: '完成',
           pin: '置顶',
           unpin: '取消置顶',
+          report: '已汇报',
+          unreport: '取消汇报',
           restore: '恢复',
           delete: '删除',
         },
@@ -1600,6 +1616,10 @@
           copiedWeekly: '已复制周报',
           pinned: '已置顶',
           unpinned: '已取消置顶',
+          reported: '已标记汇报结束',
+          unreported: '已取消汇报标记',
+          weeklyReported: '本周完成已标记汇报结束',
+          nothingToReport: '没有未汇报的本周完成',
           movedToHistory: '已移入完成历史',
           restored: '已恢复到排队',
           deletedHistory: '已从历史删除',
@@ -1646,13 +1666,14 @@
           close: '关闭',
           copy: '复制',
           range: '{start} ~ {end} · 周一至周日',
-          hint: '本周完成按完成时间；下周待办为当前排队任务。',
+          hint: '本周完成按完成时间，已汇报的不再列入；下周待办为当前排队任务。',
           heading: '# 周报（{start} ~ {end}）',
           doneHeading: '## 本周完成',
           todoHeading: '## 下周待办',
           empty: '（无）',
           nextPrefix: '下一步：',
           retroPrefix: '复盘：',
+          markReported: '标记已汇报',
         },
       },
       en: {
@@ -1684,6 +1705,7 @@
           metaParked: 'Queued {time}',
           metaDone: 'Done {time}',
           pinned: 'Pinned',
+          reported: 'Reported',
         },
         welcome: {
           title: 'Pick a task',
@@ -1733,6 +1755,8 @@
           done: 'Done',
           pin: 'Pin',
           unpin: 'Unpin',
+          report: 'Reported',
+          unreport: 'Unmark reported',
           restore: 'Restore',
           delete: 'Delete',
         },
@@ -1801,6 +1825,10 @@
           copiedWeekly: 'Weekly report copied',
           pinned: 'Pinned to top',
           unpinned: 'Unpinned',
+          reported: 'Marked as reported',
+          unreported: 'Report mark cleared',
+          weeklyReported: 'This week’s done marked as reported',
+          nothingToReport: 'No unreported done tasks this week',
           movedToHistory: 'Moved to completed',
           restored: 'Restored to queue',
           deletedHistory: 'Removed from history',
@@ -1847,13 +1875,14 @@
           close: 'Close',
           copy: 'Copy',
           range: '{start} – {end} · Monday–Sunday',
-          hint: 'Done this week uses completion time; next week is the current queue.',
+          hint: 'Done this week uses completion time and skips already reported tasks; next week is the current queue.',
           heading: '# Weekly report ({start} – {end})',
           doneHeading: '## Done this week',
           todoHeading: '## Next week',
           empty: '(none)',
           nextPrefix: 'Next: ',
           retroPrefix: 'Retro: ',
+          markReported: 'Mark reported',
         },
       },
     };
@@ -1925,6 +1954,10 @@
 
     function isTaskPinned(task) {
       return Boolean(task?.pinned);
+    }
+
+    function isTaskReported(task) {
+      return Boolean(task?.reported);
     }
 
     function getQueuedTasks() {
@@ -2246,6 +2279,9 @@
       const pinnedAt = raw.pinned || raw.pinnedAt
         ? (raw.pinnedAt || updatedAt || parkedAt)
         : null;
+      const reportedAt = raw.reported || raw.reportedAt
+        ? (raw.reportedAt || updatedAt || raw.completedAt || parkedAt)
+        : null;
       return {
         id: raw.id || uid(),
         title: String(raw.title).trim(),
@@ -2263,6 +2299,8 @@
         scheduleState: 'queued',
         pinned: Boolean(pinnedAt),
         pinnedAt,
+        reported: Boolean(reportedAt),
+        reportedAt,
       };
     }
 
@@ -3155,7 +3193,7 @@
     function thisWeekDoneTasks() {
       const { start } = currentWeekBounds();
       return history
-        .filter((task) => isInCurrentWeek(task.completedAt, start))
+        .filter((task) => isInCurrentWeek(task.completedAt, start) && !isTaskReported(task))
         .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
     }
 
@@ -3226,6 +3264,8 @@
       weeklyReportMarkdown = buildWeeklyReport();
       const body = $('#weeklyDialogBody');
       if (body) body.innerHTML = buildWeeklyReportHtml();
+      const markBtn = $('#weeklyDialogMarkReported');
+      if (markBtn) markBtn.disabled = thisWeekDoneTasks().length === 0;
     }
 
     async function showWeeklyDialog() {
@@ -3246,16 +3286,20 @@
         const text = weeklyReportMarkdown || buildWeeklyReport();
         copyText(text, t('toast.copiedWeekly'));
       });
+      $('#weeklyDialogMarkReported')?.addEventListener('click', () => {
+        void markWeeklyDoneReported();
+      });
     }
 
     /** 预览 / 编辑共用，避免切换时时间行文案或换行不一致 */
     function formatParkedTimeLine(task, fromHistory) {
       if (fromHistory) {
-        return tf('time.parkedDoneLine', {
+        const line = tf('time.parkedDoneLine', {
           parkedFull: formatFull(task.parkedAt),
           doneFull: formatFull(task.completedAt),
           doneRel: formatRelative(task.completedAt, { weekLabel: true }),
         });
+        return isTaskReported(task) ? `${line} · ${t('sidebar.reported')}` : line;
       }
       return tf('time.parkedLine', { full: formatFull(task.parkedAt), rel: formatRelative(task.parkedAt) });
     }
@@ -3602,19 +3646,22 @@
       const next = nextPlain ? `<div class="next-preview">${escapeHtml(nextPlain)}</div>` : '';
       const extraClass = listKind === 'history' ? ' history-item' : ' queued-item';
       const pinned = listKind !== 'history' && isTaskPinned(task);
+      const reported = listKind === 'history' && isTaskReported(task);
       const pinnedClass = pinned ? ' pinned-item' : '';
+      const reportedClass = reported ? ' reported-item' : '';
       const activeClass = active ? ' active' : '';
       const metaTime = listKind === 'history' ? task.completedAt : task.parkedAt;
       const metaKey = listKind === 'history' ? 'sidebar.metaDone' : 'sidebar.metaParked';
       const dataKind = listKind === 'history' ? 'history' : 'active';
       const pinLabel = pinned ? t('actions.unpin') : t('actions.pin');
-      const pinBtn = listKind === 'history'
-        ? ''
+      const reportLabel = reported ? t('actions.unreport') : t('actions.report');
+      const flagBtn = listKind === 'history'
+        ? `<button type="button" class="report-toggle${reported ? ' is-on' : ''}" data-report-toggle aria-pressed="${reported ? 'true' : 'false'}" title="${escapeHtml(reportLabel)}" aria-label="${escapeHtml(reportLabel)}">${escapeHtml(t('sidebar.reported'))}</button>`
         : `<button type="button" class="pin-toggle${pinned ? ' is-on' : ''}" data-pin-toggle aria-pressed="${pinned ? 'true' : 'false'}" title="${escapeHtml(pinLabel)}" aria-label="${escapeHtml(pinLabel)}">${escapeHtml(t('sidebar.pinned'))}</button>`;
-      return `<li class="task-item${extraClass}${pinnedClass}${activeClass}" data-id="${task.id}" data-kind="${dataKind}">
+      return `<li class="task-item${extraClass}${pinnedClass}${reportedClass}${activeClass}" data-id="${task.id}" data-kind="${dataKind}">
           <div class="task-item-head">
             <div class="title">${escapeHtml(listPreviewText(task.title))}</div>
-            ${pinBtn}
+            ${flagBtn}
           </div>
           <div class="meta">${escapeHtml(tf(metaKey, { time: formatRelative(metaTime, { weekLabel: listKind === 'history' }) }))}</div>
           ${next}
@@ -3650,13 +3697,18 @@
 
       document.querySelectorAll('.task-item').forEach((el) => {
         el.addEventListener('click', (e) => {
-          if (e.target.closest('[data-pin-toggle]')) return;
+          if (e.target.closest('[data-pin-toggle], [data-report-toggle]')) return;
           navigateToTask(el.dataset.id, el.dataset.kind === 'history');
         });
         el.querySelector('[data-pin-toggle]')?.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           void togglePin(el.dataset.id);
+        });
+        el.querySelector('[data-report-toggle]')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void toggleReported(el.dataset.id);
         });
       });
     }
@@ -3717,6 +3769,8 @@
           scheduleState: 'queued',
           pinned: false,
           pinnedAt: null,
+          reported: false,
+          reportedAt: null,
         });
         $('#taskId').value = id;
         selectedId = id;
@@ -3862,14 +3916,17 @@
       const host = $('#detailViewActions');
       if (!host || !task) return;
       if (fromHistory) {
+        const reportAction = isTaskReported(task) ? t('actions.unreport') : t('actions.report');
         host.innerHTML = `
         <button type="button" id="btnCopyAgent">${escapeHtml(t('actions.agent'))}</button>
         <button type="button" id="btnCopyResume">${escapeHtml(t('actions.summary'))}</button>
+        <button type="button" id="btnReportResume">${escapeHtml(reportAction)}</button>
         <button type="button" id="btnRestoreResume">${escapeHtml(t('actions.restore'))}</button>
         <button type="button" class="danger" id="btnDeleteHistory">${escapeHtml(t('actions.delete'))}</button>
       `;
         $('#btnCopyAgent').onclick = () => copyText(buildAgentPrompt(task), t('toast.copiedAgent'));
         $('#btnCopyResume').onclick = () => copyText(buildSummary(task), t('toast.copiedSummary'));
+        $('#btnReportResume').onclick = () => toggleReported(task.id);
         $('#btnRestoreResume').onclick = () => restoreFromHistory(task.id);
         $('#btnDeleteHistory').onclick = () => deleteFromHistory(task.id);
       } else {
@@ -4226,6 +4283,55 @@
       toast(pinned ? t('toast.pinned') : t('toast.unpinned'));
     }
 
+    function refreshHistorySelection(id) {
+      if (selectedId !== id || !selectedFromHistory) return;
+      const task = history.find((x) => x.id === id);
+      if (!task) return;
+      bindTaskDetailActions(task, true);
+      const meta = $('#detailMeta');
+      if (meta && !meta.classList.contains('hidden')) {
+        meta.textContent = formatParkedTimeLine(task, true);
+      }
+    }
+
+    async function toggleReported(id) {
+      if (!id) return;
+      const idx = history.findIndex((x) => x.id === id);
+      if (idx < 0) return;
+      const now = new Date().toISOString();
+      const reported = !isTaskReported(history[idx]);
+      history[idx] = {
+        ...history[idx],
+        reported,
+        reportedAt: reported ? now : null,
+        updatedAt: now,
+      };
+      await save();
+      renderList();
+      refreshHistorySelection(id);
+      if ($('#weeklyDialog')?.open) fillWeeklyDialog();
+      toast(reported ? t('toast.reported') : t('toast.unreported'));
+    }
+
+    async function markWeeklyDoneReported() {
+      const ids = new Set(thisWeekDoneTasks().map((task) => task.id));
+      if (!ids.size) {
+        toast(t('toast.nothingToReport'));
+        return;
+      }
+      const now = new Date().toISOString();
+      history = history.map((task) => (
+        ids.has(task.id)
+          ? { ...task, reported: true, reportedAt: now, updatedAt: now }
+          : task
+      ));
+      await save();
+      renderList();
+      if (selectedFromHistory && ids.has(selectedId)) refreshHistorySelection(selectedId);
+      fillWeeklyDialog();
+      toast(t('toast.weeklyReported'));
+    }
+
     async function markDone(id) {
       if (isTaskEditing() && $('#taskId').value === id) {
         const result = await saveCurrentForm({ silent: true });
@@ -4237,7 +4343,15 @@
       if (idx < 0) return;
       const task = tasks[idx];
       const now = new Date().toISOString();
-      history.unshift({ ...task, completedAt: now, updatedAt: now, pinned: false, pinnedAt: null });
+      history.unshift({
+        ...task,
+        completedAt: now,
+        updatedAt: now,
+        pinned: false,
+        pinnedAt: null,
+        reported: false,
+        reportedAt: null,
+      });
       tasks.splice(idx, 1);
       await save();
       selectedFromHistory = true;
@@ -4260,6 +4374,8 @@
         scheduleState: 'queued',
         pinned: false,
         pinnedAt: null,
+        reported: false,
+        reportedAt: null,
       };
       tasks.push(restored);
       history.splice(idx, 1);

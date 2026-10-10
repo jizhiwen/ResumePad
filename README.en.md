@@ -89,7 +89,8 @@ Uninstalling the Electron app does not delete `~/.config/resumepad/`; export JSO
 | **Summary** | Copy a Markdown task summary per settings |
 | **Pin / Unpin** | Pin the current queued task to the top of the list (cleared when completed or restored from history) |
 | **Done** | Move the current task to Completed |
-| **Weekly** | Dialog of this week’s completed tasks and next week’s queue (Mon–Sun; next week is the current queue); copy to clipboard |
+| **Reported / Unmark reported** | Mark whether a completed task has already gone into a weekly report; the weekly dialog can mark this week’s remaining items at once |
+| **Weekly** | Dialog of this week’s unreported completed tasks and next week’s queue (Mon–Sun; next week is the current queue); copy to clipboard |
 | **Export / Import** | JSON backup and restore (merge or replace) |
 | **Settings · appearance** | Light / dark theme (`T` still toggles theme) |
 
